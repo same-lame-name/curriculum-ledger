@@ -1,0 +1,653 @@
+set_id,title,url,track_id,track_name,topic_ids,topic_names,topic_source,n_problems,in_list_api
+1,"Basic Data Structures: Priority Queues, Sets, Maps, Counters",/problemsets/tree-data-structures,1,Basics,2,Data Structures,api-labelled,15,True
+2,"Complete Search: Recursive Backtracking, Pruning",/problemsets/complete-search-recursive-backtracking,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,17,True
+3,DP: Classic Problems,/problemsets/dp-classic,1,Basics,10,Dynamic Programming,api-labelled,16,True
+4,DP: Common Patterns,/problemsets/dp-patterns,2,Intermediate,10,Dynamic Programming,api-labelled,20,True
+5,Graphs: Basic Graph Theory,/problemsets/graphs-basics,1,Basics,12,Graphs,api-labelled,8,True
+7,DP Optimization: Eliminate Dependent Parameters,/problemsets/dp-eliminate-dependent-parameters,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,9,True
+8,Counting with DP,/problemsets/counting-with-dp,2,Intermediate,1,Math,api-labelled,21,True
+9,Harder DP Problems,/problemsets/dp-hard,4,Advanced Algorithms,,,not-listed/inferred-unknown,11,False
+10,DP with Number Theory,/problemsets/10,2,Intermediate,,,not-listed/inferred-unknown,6,False
+11,DP Optimization: Subset Convolution,/problemsets/subset-convolution,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,14,True
+12,Probability and Expectation: Markov Chains,/problemsets/markov-chains,2,Intermediate,1,Math,api-labelled,7,True
+13,DP on Subsets,/problemsets/dp-on-subsets,2,Intermediate,10,Dynamic Programming,api-labelled,25,True
+14,Bitwise Operations,/problemsets/bitwise-operations,1,Basics,2,Data Structures,api-labelled,22,True
+15,Data Structure Techniques: Sliding Window,/problemsets/sliding-window,2,Intermediate,2,Data Structures,api-labelled,9,True
+17,Graph Compression,/problemsets/17,4,Advanced Algorithms,,,not-listed/inferred-unknown,1,False
+18,Tree Flattening,/problemsets/tree-flattening,3,Advanced Data Structures,2,Data Structures,api-labelled,12,True
+19,Heavy-Light Decomposition,/problemsets/heavy-light-decomposition,3,Advanced Data Structures,2,Data Structures,api-labelled,13,True
+20,"Binary Lifting, Level Ancestors, and Lowest Common Ancestors",/problemsets/binary-lifting-lca,3,Advanced Data Structures,2,Data Structures,api-labelled,19,True
+21,Vernon's Favorite Problems,/problemsets/21,,,,,not-listed/inferred-unknown,10,False
+22,Graphs: Topological Sorting,/problemsets/topological-sort,1,Basics,12,Graphs,api-labelled,7,True
+23,Graphs: Grid Graphs,/problemsets/grids,1,Basics,12,Graphs,api-labelled,20,True
+24,Complete Search: All-Permutations,/problemsets/complete-search-permutations,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,15,True
+26,Greedy: Greedy Stays Ahead,/problemsets/greedy-stays-ahead,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,8,True
+27,Binary Search / Two Pointers Lv. 2,/problemsets/binary-search-two-pointers-2,2,Intermediate,,,not-listed/inferred-unknown,6,False
+28,Shortest Paths: Single Source,/problemsets/shortest-paths-single-source,2,Intermediate,12,Graphs,api-labelled,21,True
+29,Binary Search the Answer,/problemsets/binary-search-the-answer,2,Intermediate,18,Algorithmic Techniques (except DP),api-labelled,33,True
+30,Ternary Search,/problemsets/ternary-search,2,Intermediate,18,Algorithmic Techniques (except DP),api-labelled,9,True
+31,Complete Search: Iterative,/problemsets/complete-search-iterative,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,8,True
+32,Range Queries: Dynamic Range Queries (Point Updates),/problemsets/range-queries,2,Intermediate,2,Data Structures,api-labelled,14,True
+33,Harder Range Query Problems,/problemsets/33,3,Advanced Data Structures,,,not-listed/inferred-unknown,10,False
+34,Shortest Paths: Single Source with Negative Weights,/problemsets/shortest-paths-single-source-negative-weights,2,Intermediate,12,Graphs,api-labelled,10,True
+35,DFS Lowlink: Biconnectivity,/problemsets/biconnectivity,4,Advanced Algorithms,12,Graphs,api-labelled,13,True
+36,DFS Lowlink: Strong Connectivity,/problemsets/strong-connectivity,4,Advanced Algorithms,12,Graphs,api-labelled,11,True
+37,String Structures: Suffix Trees and Arrays,/problemsets/suffix-trees-and-arrays,3,Advanced Data Structures,17,Strings,api-labelled,9,True
+38,Divide-and-Conquer,/problemsets/divide-and-conquer,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,8,True
+39,Network Flows,/problemsets/flows,4,Advanced Algorithms,12,Graphs,api-labelled,19,True
+40,Network Flows: Bipartite Matching,/problemsets/bipartite-matching,4,Advanced Algorithms,12,Graphs,api-labelled,21,True
+41,Tree Centers and Diameter,/problemsets/tree-centers-diameter,4,Advanced Algorithms,12,Graphs,api-labelled,11,True
+42,Expression Parsing,/problemsets/42,8,Experimental,,,not-listed/inferred-unknown,5,False
+43,Fast Fourier Transform and Number-Theoretic Transform,/problemsets/fft,5,Advanced Mathematics,1,Math,api-labelled,15,True
+44,Disjoint Set Union-Find,/problemsets/dsu,2,Intermediate,2,Data Structures,api-labelled,9,True
+45,Minimum Spanning Trees,/problemsets/minimum-spanning-trees,2,Intermediate,12,Graphs,api-labelled,11,True
+46,Shortest Paths: All-Pairs,/problemsets/shortest-paths-all-pairs,2,Intermediate,12,Graphs,api-labelled,11,True
+47,"Combinatorial Games: Nim, Sprague-Grundy Theorem",/problemsets/nim-sprague-grundy,5,Advanced Mathematics,1,Math,api-labelled,28,True
+48,"Euler Cycles, Chinese Postman",/problemsets/euler-cycles-chinese-postman,4,Advanced Algorithms,12,Graphs,api-labelled,5,True
+49,Probability and Expectation: Basics,/problemsets/probability-basics,1,Basics,1,Math,api-labelled,16,True
+50,"Number Theory: Prime and Composite, Primality Testing, Prime Sieves, Finding Divisors",/problemsets/primes,1,Basics,1,Math,api-labelled,16,True
+51,Harder Number Theory Problems,/problemsets/number-theory-hard,5,Advanced Mathematics,,,not-listed/inferred-unknown,14,False
+52,Möbius Inversion,/problemsets/mobius-inversion,5,Advanced Mathematics,1,Math,api-labelled,6,True
+53,Constructive Algorithms,/problemsets/53,8,Experimental,,,not-listed/inferred-unknown,12,False
+54,Geometry,/problemsets/54,1,Basics,,,not-listed/inferred-unknown,17,False
+55,Geometry: Convex Hull,/problemsets/convex-hull,2,Intermediate,11,Geometry,api-labelled,15,True
+56,Complete Search: State-Space Search,/problemsets/state-space-search,2,Intermediate,,,not-listed/inferred-unknown,11,False
+57,Link-Cut Trees,/problemsets/link-cut-trees,3,Advanced Data Structures,2,Data Structures,api-labelled,3,True
+58,String Structures: Z Function,/problemsets/z-function,3,Advanced Data Structures,17,Strings,api-labelled,14,True
+59,Geometry: Pick's Theorem,/problemsets/picks-theorem,5,Advanced Mathematics,11,Geometry,api-labelled,2,True
+60,Augmenting Data Structures: Splay Trees and Treaps,/problemsets/augmenting-data-structures,3,Advanced Data Structures,2,Data Structures,api-labelled,8,True
+61,Tree Centroids and Centroid Decomposition,/problemsets/centroids,3,Advanced Data Structures,2,Data Structures,api-labelled,10,True
+62,Network Flows: Minimum-Cost Flows and Weighted Bipartite Matching,/problemsets/minimum-cost-flows-and-weighted-bipartite-matching,4,Advanced Algorithms,12,Graphs,api-labelled,10,True
+63,DFS Lowlink: 2-SAT,/problemsets/2-sat,4,Advanced Algorithms,12,Graphs,api-labelled,3,True
+64,String Structures: Aho-Corasick,/problemsets/aho-corasick,3,Advanced Data Structures,17,Strings,api-labelled,3,True
+65,Divide-and-Conquer Lv. 2,/problemsets/65,4,Advanced Algorithms,,,not-listed/inferred-unknown,6,False
+66,Mo's Algorithm,/problemsets/mos-algorithm,3,Advanced Data Structures,2,Data Structures,api-labelled,15,True
+67,Harder Disjoint Set Union-Find Problems,/problemsets/dsu-hard,3,Advanced Data Structures,,,not-listed/inferred-unknown,8,False
+68,Counting: Lucas' Theorem,/problemsets/lucas-theorem,5,Advanced Mathematics,1,Math,api-labelled,3,True
+69,"Basic Data Structures: Lists, Stacks, Queues",/problemsets/linear-data-structures,1,Basics,2,Data Structures,api-labelled,12,True
+72,DP Optimization: Flatten the Memo,/problemsets/dp-flatten-the-memo,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,5,True
+74,Range Queries: Orthogonal Range Queries,/problemsets/orthogonal-range-queries,3,Advanced Data Structures,2,Data Structures,api-labelled,5,True
+75,Coordinate Compression,/problemsets/75,3,Advanced Data Structures,,,not-listed/inferred-unknown,13,False
+76,Counting: Principle of Inclusion-Exclusion,/problemsets/inclusion-exclusion,2,Intermediate,1,Math,api-labelled,26,True
+77,Range Queries: Dynamic Range Queries (Range Updates),/problemsets/range-queries-with-range-updates,2,Intermediate,2,Data Structures,api-labelled,18,True
+81,DP Optimization: Divide-and-Conquer Trick,/problemsets/divide-and-conquer-trick,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,7,True
+82,Graphs: Bipartite Graphs,/problemsets/bipartite-graphs,1,Basics,12,Graphs,api-labelled,11,True
+83,DP Optimization: Knuth Optimization,/problemsets/knuth-optimization,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,5,True
+84,Counting: Burnside's Lemma,/problemsets/burnsides-lemma,5,Advanced Mathematics,1,Math,api-labelled,6,True
+85,DP Optimization: Solution Bag Optimization,/problemsets/solution-bags,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,28,True
+87,"Graphs: Breadth-First Traversal, Unweighted Shortest Paths",/problemsets/bfs,1,Basics,12,Graphs,api-labelled,15,True
+89,Traveling Salesman,/problemsets/89,4,Advanced Algorithms,,,not-listed/inferred-unknown,1,False
+90,Harder Minimum Spanning Tree Problems,/problemsets/minimum-spanning-trees-hard,4,Advanced Algorithms,,,not-listed/inferred-unknown,8,False
+91,Shortest Paths: Directed Acyclic Graphs,/problemsets/shortest-paths-dags,2,Intermediate,12,Graphs,api-labelled,6,True
+93,"Work Backwards, Invert the Problem",/problemsets/93,8,Experimental,,,not-listed/inferred-unknown,7,False
+94,Contribution Technique,/problemsets/94,8,Experimental,,,not-listed/inferred-unknown,14,False
+96,DP on Trees and Graphs Lv. 3,/problemsets/96,4,Advanced Algorithms,,,not-listed/inferred-unknown,12,False
+97,Hashing,/problemsets/hashing,2,Intermediate,17,Strings,api-labelled,18,True
+98,Data Structure Techniques: Combining Data Structures,/problemsets/combining-data-structures,2,Intermediate,2,Data Structures,api-labelled,6,True
+99,Randomized Algorithms,/problemsets/randomized,4,Advanced Algorithms,18,Algorithmic Techniques (except DP),api-labelled,6,True
+100,Harder Probability and Expectation Problems,/problemsets/probability-hard,5,Advanced Mathematics,,,not-listed/inferred-unknown,5,False
+101,CS139.3 Week 0 (Optional),/problemsets/101,9,CS139.3 2018,,,not-listed/inferred-unknown,9,False
+102,CS139.3 Week 1 (Optional),/problemsets/102,9,CS139.3 2018,,,not-listed/inferred-unknown,5,False
+103,CS139.3 Week 1 (Required),/problemsets/103,9,CS139.3 2018,,,not-listed/inferred-unknown,1,False
+104,CS139.3 Week 2 (Optional),/problemsets/104,9,CS139.3 2018,,,not-listed/inferred-unknown,8,False
+105,CS139.3 Week 2 (Required),/problemsets/105,9,CS139.3 2018,,,not-listed/inferred-unknown,1,False
+106,CS139.3 Week 3 (Optional),/problemsets/106,9,CS139.3 2018,,,not-listed/inferred-unknown,10,False
+107,Minimax Games,/problemsets/107,4,Advanced Algorithms,,,not-listed/inferred-unknown,5,False
+108,Fast Walsh-Hadamard Transform,/problemsets/fast-walsh-hadamard-transform,5,Advanced Mathematics,1,Math,api-labelled,6,True
+109,CS139.3 Week 5 (Optional),/problemsets/109,9,CS139.3 2018,,,not-listed/inferred-unknown,6,False
+110,CS139.3 Week 5 (Required),/problemsets/110,9,CS139.3 2018,,,not-listed/inferred-unknown,2,False
+111,Complete Search: All-Subsets / Binary Choice,/problemsets/complete-search-subsets,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,22,True
+112,CS139.3 Week 6 (Optional),/problemsets/112,9,CS139.3 2018,,,not-listed/inferred-unknown,9,False
+113,Offline Processing of Queries,/problemsets/offline-processing,3,Advanced Data Structures,2,Data Structures,api-labelled,11,True
+114,Binary Search the Answer Lv. 3,/problemsets/binary-search-the-answer-3,2,Intermediate,,,not-listed/inferred-unknown,7,False
+115,Binary Search the Answer Lv. 2,/problemsets/binary-search-the-answer-2,2,Intermediate,,,not-listed/inferred-unknown,8,False
+116,DP with Solution Construction,/problemsets/dp-with-construction,2,Intermediate,10,Dynamic Programming,api-labelled,13,True
+118,DP on Broken Profile,/problemsets/dp-on-broken-profile,2,Intermediate,10,Dynamic Programming,api-labelled,8,True
+119,DP: Classic Problems with Twists,/problemsets/dp-classic-with-twists,2,Intermediate,10,Dynamic Programming,api-labelled,21,True
+120,NOI.PH Training 2018 Week 4 Set 3,/problemsets/120,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,9,False
+121,NOI.PH Training 2018 Week 4 Set 4,/problemsets/121,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,8,False
+122,NOI.PH Training 2018 Week 4 Set 1,/problemsets/122,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,9,False
+123,NOI.PH Training 2018 Week 4 Set 2,/problemsets/123,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,13,False
+124,DP on Trees and Graphs Lv. 1,/problemsets/124,2,Intermediate,,,not-listed/inferred-unknown,5,False
+125,DP on Trees and Graphs with Bitmasking,/problemsets/125,4,Advanced Algorithms,,,not-listed/inferred-unknown,1,False
+126,DP with LCA,/problemsets/126,3,Advanced Data Structures,,,not-listed/inferred-unknown,4,False
+127,DP on Trees and Graphs Lv. 2,/problemsets/127,4,Advanced Algorithms,,,not-listed/inferred-unknown,5,False
+129,Harder Greedy Problems,/problemsets/greedy-hard,2,Intermediate,,,not-listed/inferred-unknown,6,False
+130,Data Structure Techniques: Line Sweep,/problemsets/line-sweep,2,Intermediate,2,Data Structures,api-labelled,19,True
+131,Number Theory: Greatest Common Divisor and Least Common Multiple,/problemsets/gcd-lcm,1,Basics,1,Math,api-labelled,21,True
+132,Number Theory: Prime Factorization,/problemsets/factorization,1,Basics,1,Math,api-labelled,9,True
+133,Number Theory: Divisor Sieve,/problemsets/divisor-sieve,2,Intermediate,1,Math,api-labelled,7,True
+134,Sorting with Custom Comparators,/problemsets/custom-comparators,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,5,True
+135,"Counting: Fibonacci, Catalan, Stirling, and Bell Numbers",/problemsets/common-combinatorial-sequences,2,Intermediate,1,Math,api-labelled,8,True
+136,Meet-in-the-Middle,/problemsets/meet-in-the-middle,2,Intermediate,18,Algorithmic Techniques (except DP),api-labelled,9,True
+137,DP Optimization: O(n lg n) Longest Monotonic Subsequence,/problemsets/longest-monotonic-subsequence,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,13,True
+138,Generating Functions,/problemsets/generating-functions,5,Advanced Mathematics,1,Math,api-labelled,6,True
+139,Counting: Permutations and Combinations,/problemsets/permutations-combinations,1,Basics,1,Math,api-labelled,21,True
+140,"Counting: Permutations with Repetition, Stars and Bars",/problemsets/stars-and-bars,2,Intermediate,1,Math,api-labelled,18,True
+141,"Counting on Graphs, Cayley's Formula, Kirchoff's Matrix Tree Theorem",/problemsets/141,5,Advanced Mathematics,,,not-listed/inferred-unknown,2,False
+142,DP Optimization: Convex Hull Trick,/problemsets/convex-hull-trick,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,10,True
+143,DP Optimization: with Matrix Exponentiation,/problemsets/dp-matrix-exponentiation,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,21,True
+145,DP on Digits,/problemsets/dp-on-digits,2,Intermediate,10,Dynamic Programming,api-labelled,18,True
+146,Tries,/problemsets/tries,3,Advanced Data Structures,2,Data Structures,api-labelled,7,True
+147,Square-Root Discrimination,/problemsets/square-root-discrimination,2,Intermediate,18,Algorithmic Techniques (except DP),api-labelled,8,True
+148,DP Optimization: Rotate the Recurrence,/problemsets/dp-rotate-the-recurrence,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,4,True
+149,Sums and Asymptotics,/problemsets/sums-and-asymptotics,12,Preliminaries,1,Math,api-labelled,16,True
+150,Math: Pigeonhole Principle,/problemsets/150,1,Basics,,,not-listed/inferred-unknown,7,False
+151,"Counting: Rule of Sum, Rule of Product",/problemsets/rule-of-sum-rule-of-product,1,Basics,1,Math,api-labelled,16,True
+157,Warmup: Implementation,/problemsets/warmup-implementation,12,Preliminaries,,,not-listed/inferred-unknown,7,False
+158,NOI.PH Training 2018 Week 0 Set B,/problemsets/158,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,3,False
+159,NOI.PH Training 2018 Week 0 Set C,/problemsets/159,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+160,NOI.PH Training 2018 Week 0 Set D,/problemsets/160,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,11,False
+161,NOI.PH Training 2018 Week 0 Set E,/problemsets/161,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,12,False
+162,NOI.PH Training 2018 Week 1,/problemsets/162,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,7,False
+163,NOI.PH Training 2018 Week 2,/problemsets/163,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,13,False
+164,NOI.PH Training 2018 Week 3 (Optional),/problemsets/164,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,6,False
+165,NOI.PH Training 2018 Week 3 (Required),/problemsets/165,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,11,False
+166,NOI.PH Training 2018 Week 5 Set 1,/problemsets/166,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+167,NOI.PH Training 2018 Week 5 Set 2,/problemsets/167,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,10,False
+168,NOI.PH Training 2018 Week 5 Set 3,/problemsets/168,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,6,False
+169,NOI.PH Training 2018 Week 6 (Optional),/problemsets/169,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,6,False
+170,NOI.PH Training 2018 Week 6 (Required),/problemsets/170,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,12,False
+171,NOI.PH Training 2018 Week 7 Set 1,/problemsets/171,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+172,NOI.PH Training 2018 Week 7 Set 2,/problemsets/172,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+173,NOI.PH Training 2018 Week 8 Set 1,/problemsets/173,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,5,False
+174,NOI.PH Training 2018 Week 8 Set 2,/problemsets/174,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+175,NOI.PH Training 2018 Week 8 Set 3,/problemsets/175,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,2,False
+176,NOI.PH Training 2018 Week 8 Set 4,/problemsets/176,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,12,False
+177,NOI.PH Training 2018 Week 8 Set 5,/problemsets/177,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,8,False
+178,NOI.PH Training 2018 Week 8 Set 6,/problemsets/178,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,22,False
+179,NOI.PH Training 2018 Week 8 Set 7,/problemsets/179,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+180,NOI.PH Training 2018 Week 8 Set 8,/problemsets/180,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,4,False
+181,NOI.PH Training 2018 Week 9 Set 1,/problemsets/181,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,5,False
+182,NOI.PH Training 2018 Week 9 Set 2,/problemsets/182,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,14,False
+184,"Number Theory: Divisibility, Modular Arithmetic",/problemsets/modular-arithmetic,1,Basics,1,Math,api-labelled,24,True
+185,Warmup: Math,/problemsets/warmup-math,12,Preliminaries,,,not-listed/inferred-unknown,7,False
+186,Warmup: Easy but Interesting Problems,/problemsets/warmup-interesting,12,Preliminaries,,,not-listed/inferred-unknown,8,False
+187,Greedy: Structural Argument,/problemsets/greedy-structural-argument,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,17,True
+189,Greedy: Exchange Argument,/problemsets/greedy-exchange-argument,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,18,True
+191,NOI.PH Training 2018 Week 10 Section 2,/problemsets/191,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,10,False
+192,NOI.PH Training 2018 Week 10 Section 4,/problemsets/192,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,6,False
+193,NOI.PH Training 2018 Week 10 Section 5,/problemsets/193,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,5,False
+194,NOI.PH Training 2018 Week 10 Section 6,/problemsets/194,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,2,False
+195,NOI.PH Training 2018 Week 10 Section 7,/problemsets/195,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,1,False
+196,NOI.PH Training 2018 Week 11,/problemsets/196,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,10,False
+197,NOI.PH Training 2018 Advanced 0 Set 3,/problemsets/noiph2018-advanced-0-3,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,11,False
+198,NOI.PH Training 2018 Advanced 0 Set 4,/problemsets/noiph2018-advanced-0-4,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,10,False
+199,Binary Search,/problemsets/binary-search,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,8,True
+200,NOI.PH Training 2018 Week 10 Section 3,/problemsets/200,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,21,False
+201,NOI.PH Training 2018 Week 12 Set S,/problemsets/201,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,18,False
+202,NOI.PH Training 2018 Week 13,/problemsets/202,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,11,False
+204,Abstract Algebra,/problemsets/abstract-algebra,5,Advanced Mathematics,1,Math,api-labelled,11,True
+205,NOI.PH Training 2018 Advanced 0 Set 1,/problemsets/noiph2018-advanced-0-1,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,3,False
+206,NOI.PH Training 2018 Advanced 0 Set 2,/problemsets/noiph2018-advanced-0-2,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,3,False
+208,Range Queries: Static Range Queries,/problemsets/prefix-sums,1,Basics,2,Data Structures,api-labelled,26,True
+209,Graphs: Trees and Tree Traversals,/problemsets/trees,1,Basics,12,Graphs,api-labelled,24,True
+210,NOI.PH Training 2018 Advanced 1,/problemsets/noiph2018-advanced-1,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,16,False
+211,NOI.PH Training 2018 Advanced 2,/problemsets/noiph2018-advanced-2,11,NOI.PH Training 2018,,,not-listed/inferred-unknown,7,False
+212,Tricky Implementation,/problemsets/tricky-implementation,2,Intermediate,8,Implementation,api-labelled,17,True
+213,Harder Square-Root Decomposition Problems,/problemsets/square-root-decomposition,3,Advanced Data Structures,,,not-listed/inferred-unknown,6,False
+214,Persistent Data Structures,/problemsets/214,3,Advanced Data Structures,,,not-listed/inferred-unknown,2,False
+215,Global Deltaing,/problemsets/global-deltaing,3,Advanced Data Structures,2,Data Structures,api-labelled,7,True
+216,"Combinatorial Games: Winning and Losing Positions, Strategy Stealing",/problemsets/216,5,Advanced Mathematics,1,Math,api-labelled,5,True
+217,Number Theory: Fast Primality Testing and Factorization Algorithms,/problemsets/fast-primality-testing-and-factorization,5,Advanced Mathematics,1,Math,api-labelled,1,True
+218,Recursion,/problemsets/recursion,12,Preliminaries,18,Algorithmic Techniques (except DP),api-labelled,9,True
+219,Math: Numeral Systems,/problemsets/numeral-systems,1,Basics,,,not-listed/inferred-unknown,8,False
+220,Small-to-Large Trick,/problemsets/small-to-large-trick,3,Advanced Data Structures,2,Data Structures,api-labelled,15,True
+221,DP on Trees Lv. 2,/problemsets/dp-on-trees-2,4,Advanced Algorithms,,,not-listed/inferred-unknown,8,False
+222,"Graphs: Depth-First Traversal, Connectivity, Cycle Detection",/problemsets/dfs,1,Basics,12,Graphs,api-labelled,20,True
+224,"Number Theory: Bézout's Lemma, Extended Euclidean Algorithm, Chinese Remainder Theorem",/problemsets/extended-gcd,2,Intermediate,1,Math,api-labelled,9,True
+225,"Number Theory: Relatively Prime, Euler Totient Function",/problemsets/euler-totient,2,Intermediate,1,Math,api-labelled,4,True
+226,Harder Shortest Path Problems,/problemsets/226,4,Advanced Algorithms,,,not-listed/inferred-unknown,11,False
+227,Graphs Lv. 9: Duality,/problemsets/graphs-duality,4,Advanced Algorithms,,,not-listed/inferred-unknown,1,False
+228,Sum of Powers: Bernoulli Numbers,/problemsets/bernoulli-numbers,5,Advanced Mathematics,1,Math,api-labelled,2,True
+229,Data Structure Techniques: Amortized Analysis,/problemsets/amortized-analysis,2,Intermediate,2,Data Structures,api-labelled,9,True
+230,DP on Trees,/problemsets/dp-on-trees,2,Intermediate,10,Dynamic Programming,api-labelled,18,True
+231,LCA Trees,/problemsets/231,3,Advanced Data Structures,,,not-listed/inferred-unknown,1,False
+232,Gomory-Hu Trees,/problemsets/232,8,Experimental,,,not-listed/inferred-unknown,1,False
+233,Geometry: Basics,/problemsets/geometry-basics,1,Basics,11,Geometry,api-labelled,17,True
+234,Geometry: Intersections and Containment,/problemsets/geometry-intersections,2,Intermediate,11,Geometry,api-labelled,5,True
+235,Geometry: Vectors and Applications,/problemsets/vectors,1,Basics,11,Geometry,api-labelled,18,True
+236,How to Code Faster,/problemsets/coding-faster,12,Preliminaries,8,Implementation,api-labelled,8,True
+237,Math: Parity,/problemsets/237,8,Experimental,,,not-listed/inferred-unknown,5,False
+238,Discrete Logarithm,/problemsets/discrete-log,5,Advanced Mathematics,1,Math,api-labelled,1,True
+239,Counting Pairs,/problemsets/counting-pairs,1,Basics,,,not-listed/inferred-unknown,12,False
+240,2019-02-16: Educational Codeforces Round 4,/problemsets/educ-cf-4,13,ADMU ProgVar,,,not-listed/inferred-unknown,6,False
+242,Dividend ≥ Divisor ⇒ Remainder ≤ Divisor ÷ 2,/problemsets/242,8,Experimental,,,not-listed/inferred-unknown,3,False
+244,Avoid Casework if Possible,/problemsets/244,8,Experimental,,,not-listed/inferred-unknown,3,False
+245,NOI.PH Training 2019 Backtracking 1,/problemsets/245,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,30,False
+246,NOI.PH Training 2019 Algorithms 2,/problemsets/246,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,25,False
+247,NOI.PH Training 2019 DP 1,/problemsets/247,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,27,False
+248,NOI.PH Training 2019 DP 3,/problemsets/248,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,10,False
+249,NOI.PH Training 2019 Math 1,/problemsets/249,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,30,False
+250,Two Pointers,/problemsets/two-pointers,1,Basics,18,Algorithmic Techniques (except DP),api-labelled,8,True
+251,NOI.PH Training 2019 Graphs 1,/problemsets/251,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,40,False
+252,NOI.PH Training 2019 DS 1,/problemsets/252,14,NOI.PH Training 2019,,,not-listed/inferred-unknown,20,False
+253,Get Started with Competitive Programming,/problemsets/get-started,12,Preliminaries,,,none,6,True
+255,Pascal's Triangle Rolling Partial Sums,/problemsets/pascals-triangle-rolling-partial-sums,8,Experimental,,,not-listed/inferred-unknown,2,False
+256,Indicator Random Variables,/problemsets/256,8,Experimental,,,not-listed/inferred-unknown,1,False
+257,Bit-Level Parallelism,/problemsets/257,8,Experimental,,,not-listed/inferred-unknown,1,False
+258,Data Structure Techniques: All Nearest Smaller Values,/problemsets/all-nearest-smaller-values,2,Intermediate,2,Data Structures,api-labelled,5,True
+259,Order Statistics,/problemsets/order-statistics,3,Advanced Data Structures,2,Data Structures,api-labelled,9,True
+260,2019-08-23: ABC054 + ARC061 + ARC062,/problemsets/260,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+261,ABC076,/problemsets/abc076,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+263,ABC096,/problemsets/abc096,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+264,2019-08-30: ABC051 + ARC067,/problemsets/264,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+265,ABC084,/problemsets/abc084,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+266,DP Optimization: Subtree Convolution,/problemsets/subtree-convolution,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,5,True
+267,ABC085,/problemsets/abc085,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+268,ABC079,/problemsets/abc079,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+269,ABC089,/problemsets/abc089,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+270,ABC099,/problemsets/abc099,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+271,ABC073,/problemsets/abc073,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+272,ABC109,/problemsets/abc109,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+273,ABC112,/problemsets/abc112,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+274,ARC058,/problemsets/arc058,16,AtCoder Regular Contests (Sorted),,,none,4,True
+275,ARC060,/problemsets/arc060,16,AtCoder Regular Contests (Sorted),,,none,4,True
+277,2019-09-14: ABC084 + ARC060,/problemsets/277,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+278,ABC115,/problemsets/abc115,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+279,Subarray Extrema Summations,/problemsets/279,8,Experimental,,,not-listed/inferred-unknown,1,False
+281,Solve 1-Dimensional Version First,/problemsets/281,8,Experimental,,,not-listed/inferred-unknown,1,False
+282,Data Structure Techniques: Manhattan Rotation,/problemsets/manhattan-rotation,2,Intermediate,,,not-listed/inferred-unknown,5,False
+283,Harmonic Lemma,/problemsets/harmonic-lemma,2,Intermediate,18,Algorithmic Techniques (except DP),api-labelled,13,True
+284,Period Finding,/problemsets/284,8,Experimental,,,not-listed/inferred-unknown,2,False
+285,2019-09-27: ABC079 + ARC071,/problemsets/285,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+286,ABC057,/problemsets/abc057,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+287,ABC064,/problemsets/abc064,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+288,ABC121,/problemsets/abc121,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+289,ABC075,/problemsets/abc075,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+290,ABC088,/problemsets/abc088,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+291,ABC070,/problemsets/abc070,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+292,ABC117,/problemsets/abc117,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+293,ARC071,/problemsets/arc071,16,AtCoder Regular Contests (Sorted),,,none,4,True
+294,Geometry: Radial Sweep,/problemsets/radial-sweep,5,Advanced Mathematics,11,Geometry,api-labelled,4,True
+295,2019-10-11: ABC115 + ABC117,/problemsets/295,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+296,DP Optimization: Tree Re-rooting,/problemsets/tree-rerooting,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,6,True
+297,ABC061,/problemsets/abc061,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+298,ABC051,/problemsets/abc051,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+299,ABC114,/problemsets/abc114,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+300,Steiner Trees,/problemsets/300,4,Advanced Algorithms,,,not-listed/inferred-unknown,1,False
+301,ABC080,/problemsets/abc080,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+302,ABC103,/problemsets/abc103,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+303,ABC119,/problemsets/abc119,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+304,ABC125,/problemsets/abc125,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+305,Math: Invariants and Monovariants,/problemsets/305,8,Experimental,,,not-listed/inferred-unknown,3,False
+306,ABC120,/problemsets/abc120,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+307,Tree Isomorphism,/problemsets/tree-isomorphism,4,Advanced Algorithms,12,Graphs,api-labelled,2,True
+308,ARC075,/problemsets/arc075,16,AtCoder Regular Contests (Sorted),,,none,4,True
+309,ABC054,/problemsets/abc054,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+310,2019-10-04: ABC115 + ABC096,/problemsets/310,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+311,ABC100,/problemsets/abc100,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+312,ARC095,/problemsets/arc095,16,AtCoder Regular Contests (Sorted),,,none,4,True
+313,2019-11-22: ABC096 + ABC112,/problemsets/313,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+314,Parentheses Balancing,/problemsets/314,8,Experimental,,,not-listed/inferred-unknown,10,False
+315,ABC116,/problemsets/abc116,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+316,2019-11-29: ABC084 + ABC089 + ABC057,/problemsets/316,13,ADMU ProgVar,,,not-listed/inferred-unknown,12,False
+317,Linear Programming,/problemsets/linear-programming,4,Advanced Algorithms,18,Algorithmic Techniques (except DP),api-labelled,2,True
+318,ABC118,/problemsets/abc118,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+319,ABC110,/problemsets/abc110,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+320,Sequence Subtraction,/problemsets/320,8,Experimental,,,not-listed/inferred-unknown,4,False
+321,Convert Complete Graphs to Star Graphs,/problemsets/321,8,Experimental,,,not-listed/inferred-unknown,3,False
+322,Find Pivot Nodes,/problemsets/322,8,Experimental,,,not-listed/inferred-unknown,2,False
+323,2019-12-06: ARC075 + ARC095,/problemsets/323,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+324,2019-2020 Christmas Break Grind (leloy),/problemsets/324,13,ADMU ProgVar,,,not-listed/inferred-unknown,17,False
+325,ABC104,/problemsets/abc104,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+326,ABC122,/problemsets/abc122,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+327,ABC105,/problemsets/abc105,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+329,Data Structure Techniques: Expanding/Shrinking Window,/problemsets/expanding-window,2,Intermediate,,,not-listed/inferred-unknown,8,False
+330,ABC106,/problemsets/abc106,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+331,2019-2020 Christmas Break Grind (raprap and sir),/problemsets/331,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+332,"2019-2020 Christmas Break Grind (mark, robin, chris, waki)",/problemsets/332,13,ADMU ProgVar,,,not-listed/inferred-unknown,68,False
+333,Domino Tiling,/problemsets/333,8,Experimental,,,not-listed/inferred-unknown,6,False
+334,Medium to Medium-Hard Graph Problems,/problemsets/334,,,,,not-listed/inferred-unknown,19,False
+335,2011 ICPC World Finals,/problemsets/icpc2011,18,ICPC World Finals,,,none,11,True
+336,2012 ICPC World Finals,/problemsets/icpc2012,18,ICPC World Finals,,,none,12,True
+337,2013 ICPC World Finals,/problemsets/icpc2013,18,ICPC World Finals,,,none,11,True
+338,2014 ICPC World Finals,/problemsets/icpc2014,18,ICPC World Finals,,,none,12,True
+340,2015 ICPC World Finals,/problemsets/icpc2015,18,ICPC World Finals,,,none,13,True
+341,2016 ICPC World Finals,/problemsets/icpc2016,18,ICPC World Finals,,,none,13,True
+342,2017 ICPC World Finals,/problemsets/icpc2017,18,ICPC World Finals,,,none,12,True
+343,2018 ICPC World Finals,/problemsets/icpc2018,18,ICPC World Finals,,,none,11,True
+344,2019 ICPC World Finals,/problemsets/icpc2019,18,ICPC World Finals,,,none,11,True
+345,ABC123,/problemsets/abc123,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+346,ABC124,/problemsets/abc124,15,4-Problem AtCoder Beginner Contests (Sorted),,,none,4,True
+347,ARC074,/problemsets/arc074,16,AtCoder Regular Contests (Sorted),,,none,4,True
+348,ARC067,/problemsets/arc067,16,AtCoder Regular Contests (Sorted),,,none,4,True
+349,Grids Rows and Columns as Bipartite Graphs,/problemsets/grid-rows-and-columns-as-bipartite-graphs,8,Experimental,,,not-listed/inferred-unknown,2,False
+350,ARC061,/problemsets/arc061,16,AtCoder Regular Contests (Sorted),,,none,4,True
+351,DP Optimization: Skip Useless States,/problemsets/dp-skip-useless-states,4,Advanced Algorithms,10,Dynamic Programming,api-labelled,7,True
+352,ARC091,/problemsets/arc091,16,AtCoder Regular Contests (Sorted),,,none,4,True
+353,ARC059,/problemsets/arc059,16,AtCoder Regular Contests (Sorted),,,none,4,True
+354,ARC062,/problemsets/arc062,16,AtCoder Regular Contests (Sorted),,,none,4,True
+355,ARC081,/problemsets/arc081,16,AtCoder Regular Contests (Sorted),,,none,4,True
+356,Upsolving: Algorithms,/problemsets/upsolving-algos,13,ADMU ProgVar,,,not-listed/inferred-unknown,10,False
+357,Upsolving: Math,/problemsets/upsolving-math,13,ADMU ProgVar,,,not-listed/inferred-unknown,6,False
+358,Upsolving: Data Structures,/problemsets/upsolving-ds,13,ADMU ProgVar,,,not-listed/inferred-unknown,9,False
+359,ARC064,/problemsets/arc064,16,AtCoder Regular Contests (Sorted),,,none,4,True
+360,ARC065,/problemsets/arc065,16,AtCoder Regular Contests (Sorted),,,none,4,True
+361,Upsolving: Algorithms (Easier),/problemsets/upsolving-algos-easier,13,ADMU ProgVar,,,not-listed/inferred-unknown,5,False
+362,Upsolving: Data Structures (Easier),/problemsets/upsolving-ds-easier,13,ADMU ProgVar,,,not-listed/inferred-unknown,3,False
+363,Upsolving: Math (Easier),/problemsets/upsolving-math-easier,13,ADMU ProgVar,,,not-listed/inferred-unknown,2,False
+364,DFS with Backup and Restore,/problemsets/dfs-with-backup-and-restore,3,Advanced Data Structures,2,Data Structures,api-labelled,3,True
+365,"2019-2020 ""COVID Break"" Grind (brian)",/problemsets/365,13,ADMU ProgVar,,,not-listed/inferred-unknown,27,False
+366,"2019-2020 ""COVID Break"" Grind (riana)",/problemsets/366,13,ADMU ProgVar,,,not-listed/inferred-unknown,50,False
+367,ARC097,/problemsets/arc097,16,AtCoder Regular Contests (Sorted),,,none,4,True
+368,ARC079,/problemsets/arc079,16,AtCoder Regular Contests (Sorted),,,none,4,True
+369,ARC090,/problemsets/arc090,16,AtCoder Regular Contests (Sorted),,,none,4,True
+370,NOI.PH 2020 Hashing,/problemsets/370,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,9,False
+371,NOI.PH 2020 Algorithms 3,/problemsets/371,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,6,False
+372,NOI.PH 2020 Algorithms 1,/problemsets/372,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,19,False
+373,Games (No Nim),/problemsets/games-no-nim,,,,,not-listed/inferred-unknown,9,False
+374,ARC076,/problemsets/arc076,16,AtCoder Regular Contests (Sorted),,,none,4,True
+375,ARC077,/problemsets/arc077,16,AtCoder Regular Contests (Sorted),,,none,4,True
+376,DP Common Tricks: Presorting,/problemsets/dp-presorting,2,Intermediate,10,Dynamic Programming,api-labelled,5,True
+377,"DP Common Tricks: Precalculation, Double DP",/problemsets/dp-precalculation,2,Intermediate,10,Dynamic Programming,api-labelled,4,True
+378,Unsorted Hard DP,/problemsets/378,,,,,not-listed/inferred-unknown,3,False
+379,NOI.PH 2020 Graphs 2,/problemsets/379,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,24,False
+380,NOI.PH 2020 Connectivity,/problemsets/380,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,15,False
+381,Small-Instance Integer Programming,/problemsets/381,8,Experimental,,,not-listed/inferred-unknown,3,False
+382,NOI.PH Training 2020 Week 6: Trees,/problemsets/382,20,NOI.PH Training 2020,,,not-listed/inferred-unknown,25,False
+384,Data Structure Techniques: Expanding Window with Prefix Sum Bags,/problemsets/expanding-window-prefix-sum-bags,2,Intermediate,,,not-listed/inferred-unknown,12,False
+385,Graphs: Posets and Anti-Chains,/problemsets/385,8,Experimental,,,not-listed/inferred-unknown,1,False
+386,Constructive: Divide and Assign Representatives,/problemsets/386,8,Experimental,,,not-listed/inferred-unknown,4,False
+387,Compress Adjacent Equal Elements,/problemsets/387,8,Experimental,,,not-listed/inferred-unknown,1,False
+388,ASHS ProgVar - Sieves,/problemsets/ashs-sieves,21,ASHS ProgVar,,,not-listed/inferred-unknown,7,False
+389,ASHS ProgVar - GCD and LCM,/problemsets/ashs-gcd-lcm,21,ASHS ProgVar,,,not-listed/inferred-unknown,7,False
+390,"ASHS ProgVar - Divisibility, Primes",/problemsets/ashs-divisibility-primes,21,ASHS ProgVar,,,not-listed/inferred-unknown,7,False
+391,ASHS ProgVar - Modulo,/problemsets/ashs-modulo,21,ASHS ProgVar,,,not-listed/inferred-unknown,6,False
+392,ASHS ProgVar - Binary and Bitwise Operations,/problemsets/ashs-binary,21,ASHS ProgVar,,,not-listed/inferred-unknown,6,False
+393,ASHS ProgVar - Bitmasks,/problemsets/ashs-bitmasking,21,ASHS ProgVar,,,not-listed/inferred-unknown,6,False
+394,2020-2021 Sem 0 Private Training (chris),/problemsets/394,13,ADMU ProgVar,,,not-listed/inferred-unknown,30,False
+395,2020-2021 Sem 0 Private Training (mark),/problemsets/395,13,ADMU ProgVar,,,not-listed/inferred-unknown,16,False
+396,ABC169,/problemsets/abc169,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+397,ABC167,/problemsets/abc167,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+398,ABC140,/problemsets/abc140,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+400,ASHS ProgVar - Intro to Graphs,/problemsets/ashs-graphs-intro,21,ASHS ProgVar,,,not-listed/inferred-unknown,5,False
+401,ASHS ProgVar - Connected Components,/problemsets/ashs-connected-components,21,ASHS ProgVar,,,not-listed/inferred-unknown,6,False
+402,ASHS ProgVar - Unweighted Shortest Path (with BFS),/problemsets/ashs-bfs,21,ASHS ProgVar,,,not-listed/inferred-unknown,4,False
+403,Dynamic Predecessor-Successor Linked List,/problemsets/403,8,Experimental,,,not-listed/inferred-unknown,1,False
+404,DP Problems for Justin,/problemsets/jus102res,,,,,not-listed/inferred-unknown,6,False
+405,ASHS ProgVar - Counting with Modular Inverses,/problemsets/ashs-mod-inv,21,ASHS ProgVar,,,not-listed/inferred-unknown,5,False
+406,2020-2021 Sem 1 Private Training (mark),/problemsets/406,13,ADMU ProgVar,,,not-listed/inferred-unknown,28,False
+407,2020-2021 Sem 1 Private Training (chris),/problemsets/407,13,ADMU ProgVar,,,not-listed/inferred-unknown,4,False
+408,2020-2021 Sem 1 Private Training (brian),/problemsets/408,13,ADMU ProgVar,,,not-listed/inferred-unknown,11,False
+409,2020-2021 Sem 1 Private Training (riana),/problemsets/409,13,ADMU ProgVar,,,not-listed/inferred-unknown,5,False
+410,ASHS ProgVar - Sum and Product Rule,/problemsets/ashs-combi,21,ASHS ProgVar,,,not-listed/inferred-unknown,4,False
+411,Properties of Binary Numbers,/problemsets/411,8,Experimental,,,not-listed/inferred-unknown,2,False
+412,2020-2021 Sem 1 Private Training (cisco),/problemsets/412,13,ADMU ProgVar,,,not-listed/inferred-unknown,7,False
+413,Harmonic Series Square Root Distinct Terms,/problemsets/413,8,Experimental,,,not-listed/inferred-unknown,2,False
+414,2020-2021 Sem 1 Private Training (dani),/problemsets/414,13,ADMU ProgVar,,,not-listed/inferred-unknown,21,False
+415,2020-2021 Sem 1 Private Training (raprap),/problemsets/415,13,ADMU ProgVar,,,not-listed/inferred-unknown,17,False
+416,Continuous Deformation,/problemsets/416,8,Experimental,,,not-listed/inferred-unknown,7,False
+417,ASHS ProgVar - XOR,/problemsets/ashs-xor,21,ASHS ProgVar,,,not-listed/inferred-unknown,5,False
+418,"ASHS ProgVar - ""Long"" Training Contest B",/problemsets/ashs-long-b,,,,,not-listed/inferred-unknown,6,False
+419,"ASHS ProgVar - ""Long"" Training Contest A",/problemsets/ashs-long-a,,,,,not-listed/inferred-unknown,6,False
+420,ASHS Grind - A,/problemsets/ashs-grind-a,21,ASHS ProgVar,,,not-listed/inferred-unknown,12,False
+421,ASHS Grind - B,/problemsets/ashs-grind-b,21,ASHS ProgVar,,,not-listed/inferred-unknown,12,False
+422,ASHS ProgVar - Binary Search,/problemsets/ashs-binary-search,21,ASHS ProgVar,,,not-listed/inferred-unknown,5,False
+423,ASHS Xmas Grind - Implementation,/problemsets/ashs-xmas-implementation,21,ASHS ProgVar,,,not-listed/inferred-unknown,15,False
+424,ASHS Xmas Grind - Insight,/problemsets/ashs-xmas-insight,21,ASHS ProgVar,,,not-listed/inferred-unknown,15,False
+425,ASHS Xmas Grind - Standard Algo Topics,/problemsets/ashs-xmas-algo,21,ASHS ProgVar,,,not-listed/inferred-unknown,15,False
+426,ASHS Xmas Grind - Standard Math Topics,/problemsets/ashs-xmas-math,21,ASHS ProgVar,,,not-listed/inferred-unknown,15,False
+427,2020-2021 Sem Break Private Training (raprap),/problemsets/427,13,ADMU ProgVar,,,not-listed/inferred-unknown,12,False
+428,2020-2021 Sem Break Private Training (mark),/problemsets/428,13,ADMU ProgVar,,,not-listed/inferred-unknown,9,False
+429,2020-2021 Sem Break Private Training (aedin),/problemsets/429,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+430,AIEP 2021 Track 1 Session 1: What is Computation?,/problemsets/430,22,AIEP 2021 Track 1,,,not-listed/inferred-unknown,26,False
+431,AIEP 2021 Track 2 Session 1: Complete Search,/problemsets/431,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,11,False
+432,2020-2021 Sem Break Private Training (dani),/problemsets/432,13,ADMU ProgVar,,,not-listed/inferred-unknown,3,False
+433,AIEP 2021 Track 2 Session 2: Recursion,/problemsets/433,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,9,False
+434,AIEP 2021 Track 1 Session 2: Repetitive Processes,/problemsets/434,22,AIEP 2021 Track 1,,,not-listed/inferred-unknown,40,False
+435,AIEP 2021 Track 2 Session 3: Recursive Backtracking,/problemsets/435,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,8,False
+436,AIEP 2021 Track 1 Session 3: Simulating Things That Change,/problemsets/436,22,AIEP 2021 Track 1,,,not-listed/inferred-unknown,16,False
+437,2021-02-20: JOI 2013 Finals,/problemsets/437,13,ADMU ProgVar,,,not-listed/inferred-unknown,5,False
+438,Shortest Paths: 0-1 BFS,/problemsets/0-1-bfs,2,Intermediate,12,Graphs,api-labelled,4,True
+439,Get Used to C++/Complete Search,/problemsets/noi-prep-1,,,,,not-listed/inferred-unknown,17,False
+440,AIEP 2021 Track 2 Session 4: Algorithm Analysis,/problemsets/440,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,9,False
+441,AIEP 2021 Track 1 Session 4: Nesting,/problemsets/441,22,AIEP 2021 Track 1,,,not-listed/inferred-unknown,19,False
+442,2021-03-05: JOI 2012 Finals,/problemsets/442,13,ADMU ProgVar,,,not-listed/inferred-unknown,5,False
+443,AIEP 2021 Track 1 Session 6: Writing Large Programs,/problemsets/443,22,AIEP 2021 Track 1,,,not-listed/inferred-unknown,3,False
+444,AIEP 2021 Track 2 Session 6: Divide and Conquer,/problemsets/444,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,1,False
+445,2021-03-13: JOI 2014 Finals,/problemsets/445,13,ADMU ProgVar,,,not-listed/inferred-unknown,5,False
+446,AIEP 2021 Track 2 Session 8: Breadth First Search,/problemsets/446,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,5,False
+447,NOI Prep - Graphs,/problemsets/noi-prep-graphs,,,,,not-listed/inferred-unknown,8,False
+449,AIEP 2021 Track 2 Session 9: Dynamic Programming,/problemsets/449,23,AIEP 2021 Track 2,,,not-listed/inferred-unknown,9,False
+450,2021-05-15: 2020 ICPC Seoul,/problemsets/450,13,ADMU ProgVar,,,not-listed/inferred-unknown,12,False
+451,Linear Algebra,/problemsets/linear-algebra,5,Advanced Mathematics,1,Math,api-labelled,7,True
+452,Circular Arrays,/problemsets/452,8,Experimental,,,not-listed/inferred-unknown,1,False
+453,All Nearest Occurrences of Letter,/problemsets/453,8,Experimental,,,not-listed/inferred-unknown,1,False
+454,Lagrange Interpolation,/problemsets/lagrange-interpolation,5,Advanced Mathematics,1,Math,api-labelled,2,True
+455,ARC082,/problemsets/arc082,16,AtCoder Regular Contests (Sorted),,,none,4,True
+456,ARC073,/problemsets/arc073,16,AtCoder Regular Contests (Sorted),,,none,4,True
+457,ABC185,/problemsets/abc185,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+458,ABC148,/problemsets/abc148,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+459,ABC153,/problemsets/abc153,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+460,ABC184,/problemsets/abc184,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+461,ABC174,/problemsets/abc174,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+462,ABC183,/problemsets/abc183,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+463,ARC068,/problemsets/arc068,16,AtCoder Regular Contests (Sorted),,,none,4,True
+464,Pisay-SOCCSKSARGEN Training - Algo Analysis (Easy),/problemsets/pisay-algo-analysis-easy,,,,,not-listed/inferred-unknown,12,False
+465,Pisay-SOCCSKSARGEN Training - Algo Analysis (Med),/problemsets/pisay-algo-analysis-med,,,,,not-listed/inferred-unknown,6,False
+466,Pisay-SOCCSKSARGEN Training - Algo Analysis (Hard),/problemsets/pisay-algo-analysis-hard,,,,,not-listed/inferred-unknown,6,False
+467,2021-2022 Sem Break Private Training (francine),/problemsets/467,13,ADMU ProgVar,,,not-listed/inferred-unknown,72,False
+468,2021-2022 Sem Break Private Training (raprap),/problemsets/468,13,ADMU ProgVar,,,not-listed/inferred-unknown,8,False
+469,ARC080,/problemsets/arc080,16,AtCoder Regular Contests (Sorted),,,none,4,True
+470,Difference Array of Boolean Array,/problemsets/470,8,Experimental,,,not-listed/inferred-unknown,2,False
+471,2021-2022 Sem Break Private Training (emman),/problemsets/471,13,ADMU ProgVar,,,not-listed/inferred-unknown,12,False
+472,"Array of +1, -1, 0",/problemsets/472,8,Experimental,,,not-listed/inferred-unknown,3,False
+473,Educational Codeforces Round 1,/problemsets/cf598,25,Codeforces Educational Rounds,,,none,6,True
+474,Educational Codeforces Round 2,/problemsets/cf600,25,Codeforces Educational Rounds,,,none,6,True
+475,Educational Codeforces Round 3,/problemsets/cf609,25,Codeforces Educational Rounds,,,none,6,True
+476,sequence sum is O(n) => O(√n) distinct terms,/problemsets/476,2,Intermediate,,,not-listed/inferred-unknown,1,False
+477,Bounded Lazy Best-First Search,/problemsets/477,2,Intermediate,,,not-listed/inferred-unknown,4,False
+478,Educational Codeforces Round 4,/problemsets/cf612,25,Codeforces Educational Rounds,,,none,6,True
+479,Educational Codeforces Round 5,/problemsets/cf616,25,Codeforces Educational Rounds,,,none,6,True
+480,Educational Codeforces Round 6,/problemsets/cf620,25,Codeforces Educational Rounds,,,none,6,True
+481,Educational Codeforces Round 7,/problemsets/cf622,25,Codeforces Educational Rounds,,,none,6,True
+482,Remove Contained Intervals,/problemsets/482,8,Experimental,,,not-listed/inferred-unknown,1,False
+484,Educational Codeforces Round 8,/problemsets/cf628,25,Codeforces Educational Rounds,,,none,6,True
+485,Educational Codeforces Round 9,/problemsets/cf632,25,Codeforces Educational Rounds,,,none,6,True
+486,Educational Codeforces Round 13,/problemsets/cf678,25,Codeforces Educational Rounds,,,none,6,True
+487,√N Save Points,/problemsets/487,8,Experimental,,,not-listed/inferred-unknown,1,False
+488,Educational Codeforces Round 15,/problemsets/cf702,25,Codeforces Educational Rounds,,,none,6,True
+489,Educational Codeforces Round 19,/problemsets/cf797,25,Codeforces Educational Rounds,,,none,6,True
+490,2022 NOI Training Week 1 - Constructive Algorithms (Warmup),/problemsets/ioi-2022-constructive-algorithms-warmup,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,8,False
+491,2022 NOI Training Week 1 - Constructive Algorithms (Graded),/problemsets/ioi-2022-constructive-algorithms-graded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,4,False
+492,2022 NOI Training Week 1 - Constructive Algorithms (Nice but Ungraded),/problemsets/ioi-2022-constructive-algorithms-nice-ungraded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,5,False
+493,2022 NOI Training Week 2 - Graph Theory (Warmup),/problemsets/ioi-2022-graph-theory-1-warmup,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,9,False
+494,2022 NOI Training Week 2 - Graph Theory (Graded),/problemsets/ioi-2022-graph-theory-1-graded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,5,False
+495,2022 NOI Training Week 2 - Graph Theory (Nice but Ungraded),/problemsets/ioi-2022-graph-theory-1-nice-ungraded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,4,False
+496,2022 NOI Training Week 3 - Data Structures (Warmup),/problemsets/ioi-2022-data-structures-warmup,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,9,False
+497,2022 NOI Training Week 3 - Data Structures (Graded),/problemsets/ioi-2022-data-structures-graded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,5,False
+498,2022 NOI Training Week 3 - Data Structures (Nice but Ungraded),/problemsets/ioi-2022-data-structures-nice-but-ungraded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,7,False
+499,ABC212,/problemsets/abc212,26,8-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,8,False
+500,ABC213,/problemsets/abc213,26,8-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,8,False
+501,2022 NOI Training Week 4 - Dynamic Programming (Warmup),/problemsets/ioi-2022-dynamic-programming-warmup,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,9,False
+502,ABC216,/problemsets/abc216,26,8-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,8,False
+503,ABC215,/problemsets/abc215,26,8-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,8,False
+504,ABC214,/problemsets/abc214,26,8-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,8,False
+505,2022 NOI Training Week 4 - Dynamic Programming (Graded),/problemsets/ioi-2022-dynamic-programming-graded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,7,False
+506,2022 NOI Training Week 4 - Dynamic Programming (Nice but Ungraded),/problemsets/ioi-2022-dynamic-programming-nice-but-ungraded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,6,False
+507,2022 NOI Training Week 5 - Graph Theory II (Graded),/problemsets/ioi-2022-graph-theory-2-graded,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,7,False
+508,Educational Codeforces Round 21,/problemsets/cf808,25,Codeforces Educational Rounds,,,none,7,True
+509,Small-Weight Knapsack-Like,/problemsets/509,8,Experimental,,,not-listed/inferred-unknown,2,False
+510,String Structures: Prefix Function,/problemsets/prefix-function,3,Advanced Data Structures,17,Strings,api-labelled,2,True
+511,Educational Codeforces Round 23,/problemsets/cf817,25,Codeforces Educational Rounds,,,none,6,True
+512,2022 NOI Training Post-selection Week 1 - Data Structures (Silver),/problemsets/ioi-2022-persistence,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,3,False
+513,2022 NOI Training Post-selection Week 1 - Data Structures (Bronze),/problemsets/ioi-2022-data-structures-2,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,6,False
+514,2022 NOI Training Post-selection Week 1 - Data Structures (Gold),/problemsets/ioi-2022-data-structures-3,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,2,False
+516,2022 NOI Training Post-selection Week 2 - DP (Bronze),/problemsets/ioi-2022-dp2,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,6,False
+517,2022 NOI Training Post-selection Week 2 - DP (Silver),/problemsets/ioi-2022-dp3,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,6,False
+518,2022 NOI Training Post-selection Week 2 - DP (Gold),/problemsets/ioi-2022-dp4,27,NOI.PH Training 2022,,,not-listed/inferred-unknown,2,False
+519,AP CSCI21 2022 Week 1 - Elementary Data Structures,/problemsets/ap-csci21-2022-1,28,AP CSCI21 2022,,,not-listed/inferred-unknown,5,False
+520,AP CSCI21 2022 Week 2 - Divide and Conquer,/problemsets/ap-csci21-2022-2,28,AP CSCI21 2022,,,not-listed/inferred-unknown,4,False
+521,AP CSCI21 2022 Week 3 - Binary Heaps and Binary Search Trees,/problemsets/ap-csci21-2022-3,28,AP CSCI21 2022,,,not-listed/inferred-unknown,6,False
+522,AP CSCI21 2022 Week 4 - Greedy Algorithms,/problemsets/ap-csci21-2022-4,28,AP CSCI21 2022,,,not-listed/inferred-unknown,5,False
+523,Easy Greedy,/problemsets/523,8,Experimental,,,not-listed/inferred-unknown,10,False
+524,AP CSCI21 2022 Week 5 - Elementary Graph Algorithms,/problemsets/ap-csci21-2022-5,28,AP CSCI21 2022,,,not-listed/inferred-unknown,9,False
+525,AP CSCI21 2022 Week 6 - Weighted Shortest Paths,/problemsets/ap-csci21-2022-6,28,AP CSCI21 2022,,,not-listed/inferred-unknown,6,False
+526,AP CSCI21 2022 Week 7 - Minimum Spanning Trees,/problemsets/ap-csci21-2022-7,28,AP CSCI21 2022,,,not-listed/inferred-unknown,5,False
+527,AP CSCI21 2022 Week 8 - Recursive Backtracking,/problemsets/ap-csci21-2022-8,28,AP CSCI21 2022,,,not-listed/inferred-unknown,8,False
+528,AP CSCI21 2022 Week 9 - Dynamic Programming,/problemsets/ap-csci21-2022-9,28,AP CSCI21 2022,,,not-listed/inferred-unknown,12,False
+529,Educational Codeforces Round 25,/problemsets/cf825,25,Codeforces Educational Rounds,,,none,7,True
+530,Educational Codeforces Round 26,/problemsets/cf837,25,Codeforces Educational Rounds,,,none,7,True
+531,"2022-2023 Sem Break Grind (francine, week 1)",/problemsets/531,13,ADMU ProgVar,,,not-listed/inferred-unknown,42,False
+532,"2022-2023 Sem Break Grind (mark, week 1)",/problemsets/532,13,ADMU ProgVar,,,not-listed/inferred-unknown,10,False
+533,ABC158,/problemsets/abc158,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+535,"2022-2023 Sem Break Grind (rafa, week 1)",/problemsets/535,13,ADMU ProgVar,,,not-listed/inferred-unknown,24,False
+536,"2022-2023 Sem Break Grind (ivan, week 1)",/problemsets/536,13,ADMU ProgVar,,,not-listed/inferred-unknown,10,False
+537,"2022-2023 Sem Break Grind (lam, week 1)",/problemsets/537,13,ADMU ProgVar,,,not-listed/inferred-unknown,17,False
+538,"2022-2023 Sem Break Grind (thanie, week 1)",/problemsets/538,13,ADMU ProgVar,,,not-listed/inferred-unknown,18,False
+539,Median,/problemsets/539,8,Experimental,,,not-listed/inferred-unknown,3,False
+540,"2022-2023 Sem Break Grind (francine, week 2)",/problemsets/540,13,ADMU ProgVar,,,not-listed/inferred-unknown,37,False
+541,Data Structure Techniques: Plot Pairs in a 2D Plane,/problemsets/plot-pairs,2,Intermediate,,,not-listed/inferred-unknown,5,False
+542,"2022-2023 Sem Break Grind (rafa, week 2)",/problemsets/542,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+543,"2022-2023 Sem Break Grind (mark, week 2)",/problemsets/543,13,ADMU ProgVar,,,not-listed/inferred-unknown,10,False
+544,ABC126,/problemsets/abc126,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+546,"2022-2023 Sem Break Grind (pastor, week 1)",/problemsets/546,13,ADMU ProgVar,,,not-listed/inferred-unknown,24,False
+547,"2022-2023 Sem Break Grind (thanie, week 2)",/problemsets/547,13,ADMU ProgVar,,,not-listed/inferred-unknown,11,False
+548,ABC192,/problemsets/abc192,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+549,"2022-2023 Sem Break Grind (mark, week 3)",/problemsets/549,13,ADMU ProgVar,,,not-listed/inferred-unknown,10,False
+550,"2022-2023 Sem Break Grind (ivan, week 3)",/problemsets/550,13,ADMU ProgVar,,,not-listed/inferred-unknown,15,False
+551,"2022-2023 Sem Break Grind (rafa, week 3)",/problemsets/551,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+552,ABC190,/problemsets/abc190,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+553,ABC154,/problemsets/abc154,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+554,"2022-2023 Sem Break Grind (jackie, week 1)",/problemsets/554,13,ADMU ProgVar,,,not-listed/inferred-unknown,17,False
+555,ABC166,/problemsets/abc166,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+556,ABC162,/problemsets/abc162,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+557,ABC151,/problemsets/abc151,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+558,ABC171,/problemsets/abc171,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+559,ABC179,/problemsets/abc179,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+560,"2022-2023 Sem Break Grind (rafa, week 4)",/problemsets/560,13,ADMU ProgVar,,,not-listed/inferred-unknown,18,False
+561,"2022-2023 Sem Break Grind (jackie, week 2)",/problemsets/561,13,ADMU ProgVar,,,not-listed/inferred-unknown,14,False
+562,"[Deprecated] Basic Data Structures: Lists, Stacks, Queues",/problemsets/562,29,Deprecated,,,not-listed/inferred-unknown,16,False
+563,"[Deprecated] Basic Data Structures: Priority Queues, Sets, Maps, Counters",/problemsets/563,29,Deprecated,,,not-listed/inferred-unknown,1,False
+564,Constructive: Sorting,/problemsets/564,8,Experimental,,,not-listed/inferred-unknown,2,False
+565,[Deprecated] Greedy: Exchange Argument,/problemsets/565,29,Deprecated,,,not-listed/inferred-unknown,1,False
+566,Cycle Finding,/problemsets/566,8,Experimental,,,not-listed/inferred-unknown,1,False
+567,ABC165,/problemsets/abc165,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+568,ABC159,/problemsets/abc159,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+569,ABC152,/problemsets/abc152,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+570,ABC142,/problemsets/abc142,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+571,ABC131,/problemsets/abc131,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+572,ABC161,/problemsets/abc161,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+573,ABC188,/problemsets/abc188,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+574,ABC197,/problemsets/abc197,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+575,ABC187,/problemsets/abc187,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+576,ABC186,/problemsets/abc186,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+577,ABC178,/problemsets/abc178,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+578,[Deprecated] Graphs (Abridged),/problemsets/graphs,29,Deprecated,,,not-listed/inferred-unknown,14,False
+579,Shortest Paths (Abridged),/problemsets/shortest-paths,2,Intermediate,,,not-listed/inferred-unknown,6,False
+580,"Complete Search: Recursive Backtracking, Pruning (Abridged)",/problemsets/recursive-backtracking,1,Basics,,,not-listed/inferred-unknown,9,False
+581,Dynamic Programming (Abridged),/problemsets/dynamic-programming,1,Basics,,,not-listed/inferred-unknown,18,False
+582,[Deprecated] Recursion,/problemsets/582,29,Deprecated,,,not-listed/inferred-unknown,2,False
+583,[Deprecated] How to Code Faster,/problemsets/583,29,Deprecated,,,not-listed/inferred-unknown,3,False
+584,ABC173,/problemsets/abc173,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+585,ABC170,/problemsets/abc170,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+586,2023 NOI Training Week 0,/problemsets/ioi-2023-problem-spam,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,15,False
+587,2023 NOI Training Week 1 - Interactive Problems,/problemsets/ioi-2023-interactive,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,10,False
+588,2023 NOI Training Week 1 - Algorithm Analysis,/problemsets/ioi-2023-algo-analysis,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,13,False
+590,Complete Search: Iterative with Pruning,/problemsets/complete-search-iterative-with-pruning,,,,,none,6,True
+591,[Deprecated] Complete Search: Iterative,/problemsets/591,29,Deprecated,,,not-listed/inferred-unknown,3,False
+592,Week 5,/problemsets/ioi-2023-week-5,,,,,not-listed/inferred-unknown,5,False
+593,Asymptotic Analysis,/problemsets/asymptotic-analysis,12,Preliminaries,,,not-listed/inferred-unknown,10,False
+594,[Deprecated] Binary Search,/problemsets/594,29,Deprecated,,,not-listed/inferred-unknown,2,False
+595,Graphs: Breadth-First Search and Depth-First Search,/problemsets/bfs-dfs,1,Basics,,,not-listed/inferred-unknown,11,False
+596,"[Deprecated] Complete Search: Recursive Backtracking, Pruning",/problemsets/596,29,Deprecated,,,not-listed/inferred-unknown,3,False
+597,ABC127,/problemsets/abc127,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+598,ABC132,/problemsets/abc132,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+600,Subsets of Subsets Trick,/problemsets/600,8,Experimental,,,not-listed/inferred-unknown,1,False
+601,ABC139,/problemsets/abc139,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+602,ABC144,/problemsets/abc144,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+603,ABC149,/problemsets/abc149,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+604,ABC160,/problemsets/abc160,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+605,ABC156,/problemsets/abc156,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+606,ABC172,/problemsets/abc172,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+607,ABC181,/problemsets/abc181,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+608,ABC182,/problemsets/abc182,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+609,ABC195,/problemsets/abc195,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+610,ABC189,/problemsets/abc189,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+611,ABC204,/problemsets/abc204,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+612,ABC205,/problemsets/abc205,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+613,ABC199,/problemsets/abc199,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+614,ABC143,/problemsets/abc143,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+615,ABC141,/problemsets/abc141,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+616,ABC194,/problemsets/abc194,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+617,ABC136,/problemsets/abc136,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+618,2023 NOI Training Week 10 - Bootcamp Problem Spam,/problemsets/ioi-2023-bootcamp-week-10-spam,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,5,False
+619,"2023 NOI.PH Personal Training (Gelo, Week 12)",/problemsets/619,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,9,False
+620,2023 NOI Training Week 13 - Dynamic Programming,/problemsets/ioi-2023-dp,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,9,False
+621,2023 NOI Training Week 15 - Weighted Graphs and Dijkstra's Algorithm,/problemsets/ioi-2023-dijkstra,30,NOI.PH Training 2023,,,not-listed/inferred-unknown,7,False
+622,AP CSCI 30 / CSCI 201 2023 Weeks 1-2: Flows and Matchings,/problemsets/ap-csci30-2023-1,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,9,False
+623,"AP CSCI 30 / CSCI 201 2023 Weeks 1-2: Flows and Matchings (Extra, Optional)",/problemsets/ap-csci30-2023-1-optional,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,7,False
+624,2023 NOI Training - DP 2,/problemsets/ioi-2023-dp-2,,,,,not-listed/inferred-unknown,6,False
+625,AP CSCI 30 / CSCI 201 2023 Weeks 3-4: Dynamic Programming on Special Structures,/problemsets/ap-csci30-2023-2,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,11,False
+626,DP on Primes,/problemsets/dp-on-primes,2,Intermediate,,,not-listed/inferred-unknown,7,False
+627,NOI.PH Training Camp - Spanning Trees and MCSTs,/problemsets/ioi-2023-spanning-trees,,,,,not-listed/inferred-unknown,6,False
+628,AP CSCI 30 / CSCI 201 2023 Weeks 5-6: More Divide-and-Conquer,/problemsets/ap-csci30-2023-3,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,9,False
+629,AP CSCI 30 / CSCI 201 2023 Week 7: Amortized Analysis,/problemsets/ap-csci30-2023-4,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,9,False
+630,"AP CSCI 30 / CSCI 201 2023 Week 7: Amortized Analysis (Extra, Optional)",/problemsets/ap-csci30-2023-4-optional,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,4,False
+631,AP CSCI 30 / CSCI 201 2023 Weeks 8-9: Dynamic Programming Optimizations,/problemsets/ap-csci30-2023-5,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,11,False
+632,AP CSCI 21 / Math 71.1 2023 Week 1 - Preliminaries: Top-Down Design and Recursion,/problemsets/ap-csci21-2023-1,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,9,False
+633,"AP CSCI 21 / Math 71.1 2023 Week 2 - Asymptotic Analysis, Elementary Data Structures",/problemsets/ap-csci21-2023-2,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,11,False
+634,AP CSCI 21 / Math 71.1 2023 Week 3 - Divide and Conquer,/problemsets/ap-csci21-2023-3,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,6,False
+635,AP CSCI 21 / Math 71.1 2023 Week 4 - Binary Heaps and Binary Search Trees,/problemsets/ap-csci21-2023-4,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,7,False
+636,AP CSCI 30 / CSCI 201 2023 Weeks 10-11: Assorted Data Structure Techniques,/problemsets/ap-csci30-2023-6,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,15,False
+637,AP CSCI 21 / Math 71.1 2023 Week 5 - Greedy Algorithms,/problemsets/ap-csci21-2023-5,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,6,False
+638,AP CSCI 21 / Math 71.1 2023 Week 6 - Elementary Graph Algorithms,/problemsets/ap-csci21-2023-6,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,12,False
+639,AP CSCI 30 / CSCI 201 2023 Week 12: Biconnectivity and Strong Connectivity,/problemsets/ap-csci30-2023-7,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,5,False
+640,AP CSCI 21 / Math 71.1 2023 Week 7 - Weighted Shortest Paths,/problemsets/ap-csci21-2023-7,33,AP CSCI 21 / Math 71.1 2023,,,not-listed/inferred-unknown,6,False
+641,AP CSCI 30 / CSCI 201 2023 Weeks 13-14: String Algorithms,/problemsets/ap-csci30-2023-8,31,AP CSCI 30 / CSCI 201 2023,,,not-listed/inferred-unknown,10,False
+642,Bitwise Tries,/problemsets/bitwise-tries,3,Advanced Data Structures,,,not-listed/inferred-unknown,9,False
+643,Dilworth's Theorem,/problemsets/dilworths-theorem,8,Experimental,,,not-listed/inferred-unknown,2,False
+644,Proto-Standard Technique,/problemsets/644,,,,,not-listed/inferred-unknown,1,False
+645,NOI.PH 2024 Week 1: Asymptotic Analysis,/problemsets/noiph-2024-week-1,34,NOI.PH Training 2024,,,not-listed/inferred-unknown,10,False
+646,Calculus,/problemsets/646,8,Experimental,,,not-listed/inferred-unknown,1,False
+647,ABC130,/problemsets/abc130,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+648,ABC133,/problemsets/abc133,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+649,ABC145,/problemsets/abc145,24,6-Problem AtCoder Beginner Contests (Sorted),,,none,6,True
+650,ABC146,/problemsets/abc146,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+651,ABC147,/problemsets/abc147,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+652,ABC150,/problemsets/abc150,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+653,ABC177,/problemsets/abc177,24,6-Problem AtCoder Beginner Contests (Sorted),,,not-listed/inferred-unknown,6,False
+654,"ADMU ProgVar Beginner Training 2024-2025 Module 1: Top-Down Design, Recursion",/problemsets/admu-L1-2024-1,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,7,False
+655,ADMU ProgVar Beginner Training 2024-2025 Module 2: Asymptotic Analysis,/problemsets/admu-L1-2024-2,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,6,False
+656,ADMU ProgVar Beginner Training 2024-2025 Module 3: Elementary Data Structures,/problemsets/admu-L1-2024-3,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,7,False
+657,ADMU ProgVar Beginner Training 2024-2025 Module 4: Binary Search,/problemsets/admu-L1-2024-4,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,5,False
+658,ADMU ProgVar Beginner Training 2024-2025 Module 5: Divide-and-Conquer,/problemsets/admu-L1-2024-5,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,6,False
+659,ADMU ProgVar Beginner Training 2024-2025 Module 6: Heaps and Binary Search Trees,/problemsets/admu-L1-2024-6,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,8,False
+660,ADMU ProgVar Intermediate Training Module 1: Flows and Matchings,/problemsets/admu-L2-2024-1,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,9,False
+661,ADMU ProgVar Intermediate Training Module 2: Dynamic Programming on Special Structures,/problemsets/admu-L2-2024-2,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,11,False
+662,"2024-2025 Sem Break Grind (arthur, week 1)",/problemsets/662,13,ADMU ProgVar,,,not-listed/inferred-unknown,7,False
+664,ADMU ProgVar Beginner Training 2024-2025 Module 7: Greedy Stays Ahead and Exchange Arguments,/problemsets/admu-L1-2024-7,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,11,False
+665,"2024-2025 Sem Break Grind (rafa, week 1)",/problemsets/665,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+666,"2024-2025 Sem Break Grind (lam, week 1)",/problemsets/666,13,ADMU ProgVar,,,not-listed/inferred-unknown,38,False
+667,"2024-2025 Sem Break Grind (lam, week 3)",/problemsets/667,13,ADMU ProgVar,,,not-listed/inferred-unknown,3,False
+668,"2024-2025 Sem Break Grind (beaux, week 1)",/problemsets/668,13,ADMU ProgVar,,,not-listed/inferred-unknown,13,False
+669,"2024-2025 Sem Break Grind (beaux, week 2)",/problemsets/669,13,ADMU ProgVar,,,not-listed/inferred-unknown,13,False
+670,"2024-2025 Sem Break Grind Shared Problems, Week 1",/problemsets/670,13,ADMU ProgVar,,,not-listed/inferred-unknown,4,False
+671,"2024-2025 Sem Break Grind (arthur, week 2)",/problemsets/671,13,ADMU ProgVar,,,not-listed/inferred-unknown,7,False
+672,"2024-2025 Sem Break Grind (rafa, week 2)",/problemsets/672,13,ADMU ProgVar,,,not-listed/inferred-unknown,20,False
+673,"2024-2025 Sem Break Grind (beaux, week 3)",/problemsets/673,13,ADMU ProgVar,,,not-listed/inferred-unknown,6,False
+674,"2024-2025 Sem Break Grind (lam, week 2)",/problemsets/674,13,ADMU ProgVar,,,not-listed/inferred-unknown,38,False
+675,ADMU ProgVar Beginner Training 2024-2025 Module 8: Structural Arguments,/problemsets/admu-L1-2024-8,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,8,False
+676,ADMU ProgVar Beginner Training 2024-2025 Module 9: Elementary Graph Algorithms,/problemsets/admu-L1-2024-9,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,14,False
+677,ADMU ProgVar Beginner Training 2024-2025 Module 10: Weighted Shortest Paths,/problemsets/admu-L1-2024-10,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,6,False
+678,ADMU ProgVar Beginner Training 2024-2025 Module 11: Recursive Backtracking,/problemsets/admu-L1-2024-11,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,7,False
+679,"ADMU ProgVar Beginner Training 2024-2025 Module 12: Memoization, Dynamic Programming on Prefixes/Suffixes",/problemsets/admu-L1-2024-12,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,13,False
+680,"ADMU ProgVar Beginner Training 2024-2025 Module 13: Dynamic Programming on Substrings, Solution Reconstruction",/problemsets/admu-L1-2024-13,35,ADMU ProgVar Beginner Training 2024-2025,,,not-listed/inferred-unknown,6,False
+682,ADMU ProgVar Intermediate Training Module 3: More Divide-and-Conquer,/problemsets/admu-L2-2024-3,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,0,False
+683,ADMU ProgVar Intermediate Training Module 4: Dynamic Programming Optimizations,/problemsets/admu-L2-2024-4,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,0,False
+684,ADMU ProgVar Intermediate Training Module 5: Data Structure Techniques,/problemsets/admu-L2-2024-5,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,0,False
+685,ADMU ProgVar Intermediate Training Module 6: Biconnectivity and Strong Connectivity,/problemsets/admu-L2-2024-6,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,0,False
+686,ADMU ProgVar Intermediate Training Module 7: String Algorithms,/problemsets/admu-L2-2024-7,36,ADMU ProgVar Intermediate Training 2024-2025,,,not-listed/inferred-unknown,0,False
+687,Prefix Bitwise OR Has O(Word Length) Distinct Values,/problemsets/687,8,Experimental,,,not-listed/inferred-unknown,2,False
+688,ADMU ProgVar Intermediate Training Module 10: String Algorithms,/problemsets/admu-L2-2025-10,,,,,not-listed/inferred-unknown,0,False
+689,ADMU ProgVar Intermediate Training Module 9: Biconnectivity and Strong Connectivity,/problemsets/admu-L2-2025-9,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,6,False
+690,ADMU ProgVar Intermediate Training Module 8: Miscellaneous Data Structure Techniques,/problemsets/admu-L2-2025-8,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,19,False
+691,ADMU ProgVar Intermediate Training Module 7: Dynamic Programming Optimizations,/problemsets/admu-L2-2025-7,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,16,False
+692,ADMU ProgVar Intermediate Training Module 6: Fast Fourier Transform,/problemsets/admu-L2-2025-6,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,6,False
+693,ADMU ProgVar Intermediate Training Module 5: Dynamic Range Queries,/problemsets/admu-L2-2025-5,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,10,False
+694,ADMU ProgVar Intermediate Training Module 4: DP on Special Structures,/problemsets/admu-L2-2025-4,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,11,False
+695,ADMU ProgVar Intermediate Training Module 3: Flows and Matchings,/problemsets/admu-L2-2025-3,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,9,False
+696,"ADMU ProgVar Intermediate Training Module 2: Minimum Spanning Trees, Union-Find",/problemsets/admu-L2-2025-2,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,5,False
+697,ADMU ProgVar Intermediate Training Module 1: Amortized Analysis,/problemsets/admu-L2-2025-1,37,ADMU ProgVar Intermediate Training 2025-2026,,,not-listed/inferred-unknown,10,False
+698,LCA Unsolved Problems,/problemsets/698,3,Advanced Data Structures,,,not-listed/inferred-unknown,5,False
