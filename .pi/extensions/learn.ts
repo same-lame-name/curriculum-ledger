@@ -53,27 +53,25 @@ function courseTemplate(slug: string): string {
 	return `# Course: ${title}
 state: active
 source: none
+scope: open
 
-## Student Baseline
-- Confirmed Floor: none
-- Pinned Ceiling: none
+## Where the student stands
+- Solid on: none yet
+- Growing edge: none yet
+- Watch out for: none yet
 
-## Roadmap
-none
+## Plan
+none yet
 
-## Active Checkpoint
-- Active Node: Intake & Calibration
-- Motivating Fracture & Invariant: none
-- Boundary & Sentinel Contract: none
-- Active Instance: none
-- Open Question: Initial frontier probe
-- Completed Problems: none
+## On the board right now
+- Working on: Finding our starting point
+- Where we left off: Course just created
+- Sketch on the board: none yet
+- Next move: Map out the plan and check where the student's footing is solid
 
-## Active Misconceptions & Friction
-none
-
-## Parked Topics
-none
+## Habits & tangents to remember
+- Watch out for: none yet
+- Parked for later: none
 
 ## Session log
 - ${today()} → sessions/${today()}.md

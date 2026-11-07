@@ -8,8 +8,8 @@ USABLE TWO WAYS:
        python3 catalog.py domains
        python3 catalog.py buckets "Dynamic Programming"
        python3 catalog.py bucket "DP on Broken Profile"
-       python3 catalog.py bucket "0-1 BFS" --urls --limit 10
-       python3 catalog.py find "knapsack"
+       python3 catalog.py bucket "0-1 BFS" --min-diff 1100 --max-diff 1600 --urls --limit 10
+       python3 catalog.py find "knapsack" --min-diff 1000 --max-diff 1500
        python3 catalog.py problem "Counting Tilings"
        python3 catalog.py resources "Convex Hull Trick"
        # Add --json to any command for machine-readable output
@@ -18,13 +18,12 @@ USABLE TWO WAYS:
        import catalog
        catalog.domains()
        catalog.buckets("Graphs")
-       catalog.bucket("0-1 BFS")
+       catalog.bucket("0-1 BFS", min_diff=1100, max_diff=1600)
        catalog.find("knapsack")
        catalog.resources("2-SAT")
 """
 import argparse, json, os, re, sys
 
-# Reconfigure stdout/stderr to utf-8 if supported (handles Windows cp1252 console gracefully)
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -39,12 +38,16 @@ if sys.stderr and hasattr(sys.stderr, "reconfigure"):
 HERE = os.path.dirname(os.path.abspath(__file__))
 CATALOG_JSON = os.path.join(HERE, "catalog.json")
 
+
 class CatalogError(Exception):
     def __init__(self, msg, candidates=()):
         super().__init__(msg)
         self.candidates = list(candidates)
 
+
 _DATA = None
+
+
 def data():
     global _DATA
     if _DATA is None:
@@ -54,33 +57,49 @@ def data():
             _DATA = json.load(f)
     return _DATA
 
+
 def _norm(s):
     return re.sub(r"\s+", " ", (s or "").strip().lower())
+
 
 def _matches_query(query, target):
     q = _norm(query)
     t = _norm(target)
-    if not q: return True
-    if q in t: return True
+    if not q:
+        return True
+    if q in t:
+        return True
     tokens = q.split()
     return all(tok in t for tok in tokens)
 
+
+def _is_excluded(prob, exc_set):
+    if not exc_set:
+        return False
+    pid = _norm(prob.get("id", ""))
+    pname = _norm(prob.get("name", ""))
+    purl = _norm(prob.get("url", ""))
+    return (pid and pid in exc_set) or (pname and pname in exc_set) or (purl and purl in exc_set)
+
+
 # ---------------------------------------------------------------- Library API
+
 
 def domains():
     d = data()
     out = []
     for dom in d["domains"]:
-        buckets = [b for b in d["buckets"] if b["domain"] == dom]
-        n_probs = sum(len(b["problems"]) for b in buckets)
-        n_res = sum(len(b["resources"]) for b in buckets)
+        buckets_in_dom = [b for b in d["buckets"] if b["domain"] == dom]
+        n_probs = sum(len(b["problems"]) for b in buckets_in_dom)
+        n_res = sum(len(b["resources"]) for b in buckets_in_dom)
         out.append({
             "domain": dom,
-            "n_buckets": len(buckets),
+            "n_buckets": len(buckets_in_dom),
             "n_problems": n_probs,
             "n_resources": n_res
         })
     return out
+
 
 def buckets(domain=None, bucket_type=None):
     d = data()
@@ -106,22 +125,19 @@ def buckets(domain=None, bucket_type=None):
         raise CatalogError(f"no domain matching {domain!r}", cands)
     return res
 
+
 def _find_bucket(name_or_id):
     d = data()
     q = _norm(name_or_id)
-    # 1. Exact bucket_id match
     for b in d["buckets"]:
         if b["bucket_id"].lower() == q:
             return b
-    # 2. Exact title match
     for b in d["buckets"]:
         if _norm(b["title"]) == q:
             return b
-    # 3. Substring / token match in bucket title
     matches = [b for b in d["buckets"] if _matches_query(q, b["title"])]
     if matches:
         return matches[0]
-    # 4. Check absorbed topics
     for b in d["buckets"]:
         for a in b["absorbed_topics"]:
             if _matches_query(q, a["title"]) or _matches_query(q, a["topic_id"]):
@@ -129,24 +145,27 @@ def _find_bucket(name_or_id):
     cands = [b["title"] for b in d["buckets"] if any(t in _norm(b["title"]) for t in q.split()[:2])][:10]
     raise CatalogError(f"no bucket matching {name_or_id!r}", cands)
 
-def bucket(name_or_id, source=None, starred_only=False, exclude=None, limit=None):
+
+def bucket(name_or_id, source=None, starred_only=False, exclude=None, min_diff=None, max_diff=None, limit=None):
     b = _find_bucket(name_or_id)
     probs = list(b["problems"])
 
-    # Exclusions
     if exclude:
         exc_set = {_norm(x) for x in exclude if x}
-        probs = [p for p in probs if _norm(p["name"]) not in exc_set and _norm(p["url"]) not in exc_set]
+        probs = [p for p in probs if not _is_excluded(p, exc_set)]
 
-    # Source filter
     if source == "pv":
         probs = [p for p in probs if "pv" in p["source"]]
     elif source == "utl":
         probs = [p for p in probs if "utl" in p["source"]]
 
-    # Starred filter
     if starred_only:
         probs = [p for p in probs if p.get("is_starred", False)]
+
+    if min_diff is not None:
+        probs = [p for p in probs if int(p.get("difficulty", 1200)) >= int(min_diff)]
+    if max_diff is not None:
+        probs = [p for p in probs if int(p.get("difficulty", 1200)) <= int(max_diff)]
 
     if limit:
         probs = probs[:limit]
@@ -164,7 +183,8 @@ def bucket(name_or_id, source=None, starred_only=False, exclude=None, limit=None
         "n_templates": len(b["templates"])
     }
 
-def find(text, limit=25, source=None, starred_only=False, exclude=None):
+
+def find(text, limit=25, source=None, starred_only=False, exclude=None, min_diff=None, max_diff=None):
     d = data()
     q = _norm(text)
     if not q:
@@ -188,18 +208,31 @@ def find(text, limit=25, source=None, starred_only=False, exclude=None):
     for b in d["buckets"]:
         for p in b["problems"]:
             p_url = p.get("url", "")
-            if p_url in seen_urls: continue
-            if _norm(p["name"]) in exc_set or _norm(p_url) in exc_set: continue
-            if source == "pv" and "pv" not in p["source"]: continue
-            if source == "utl" and "utl" not in p["source"]: continue
-            if starred_only and not p.get("is_starred", False): continue
+            if p_url in seen_urls:
+                continue
+            if _is_excluded(p, exc_set):
+                continue
+            if source == "pv" and "pv" not in p["source"]:
+                continue
+            if source == "utl" and "utl" not in p["source"]:
+                continue
+            if starred_only and not p.get("is_starred", False):
+                continue
+            p_diff = int(p.get("difficulty", 1200))
+            if min_diff is not None and p_diff < int(min_diff):
+                continue
+            if max_diff is not None and p_diff > int(max_diff):
+                continue
 
-            if _matches_query(q, p["name"]):
+            if _matches_query(q, p["name"]) or _matches_query(q, p.get("id", "")):
                 seen_urls.add(p_url)
                 hit_probs.append({
+                    "id": p.get("id", ""),
                     "name": p["name"],
                     "url": p_url,
                     "platform": p["platform"],
+                    "difficulty": p_diff,
+                    "difficulty_source": p.get("difficulty_source", "catalog_tier"),
                     "source": p["source"],
                     "is_starred": p.get("is_starred", False),
                     "bucket": b["title"],
@@ -216,6 +249,7 @@ def find(text, limit=25, source=None, starred_only=False, exclude=None):
         "problems": hit_probs[:limit]
     }
 
+
 def problem(name_or_url):
     d = data()
     q = _norm(name_or_url)
@@ -224,7 +258,10 @@ def problem(name_or_url):
 
     for b in d["buckets"]:
         for p in b["problems"]:
-            if _norm(p["name"]) == q or _norm(p.get("url", "")) == q or q in _norm(p["name"]):
+            pid = _norm(p.get("id", ""))
+            pname = _norm(p["name"])
+            purl = _norm(p.get("url", ""))
+            if pid == q or pname == q or purl == q or q in pname or q in purl:
                 if not target_prob:
                     target_prob = p
                 occurrences.append({
@@ -241,20 +278,26 @@ def problem(name_or_url):
             for p in b["problems"]:
                 if any(tok in _norm(p["name"]) for tok in q.split()[:2]):
                     cands.append(p["name"])
-                    if len(cands) >= 8: break
-            if len(cands) >= 8: break
+                    if len(cands) >= 8:
+                        break
+            if len(cands) >= 8:
+                break
         raise CatalogError(f"no problem matching {name_or_url!r}", cands)
 
     return {
+        "id": target_prob.get("id", ""),
         "name": target_prob["name"],
         "url": target_prob["url"],
         "platform": target_prob["platform"],
+        "difficulty": target_prob.get("difficulty", 1200),
+        "difficulty_source": target_prob.get("difficulty_source", "catalog_tier"),
         "source": target_prob["source"],
         "is_starred": target_prob.get("is_starred", False),
         "solved_count": target_prob.get("solved_count", 0),
         "dacu": target_prob.get("dacu", 0),
         "occurrences": occurrences
     }
+
 
 def resources(bucket_or_topic, limit=15):
     d = data()
@@ -263,7 +306,6 @@ def resources(bucket_or_topic, limit=15):
     tmpl_list = []
     matched_bucket = None
 
-    # Check bucket
     for b in d["buckets"]:
         if _matches_query(q, b["title"]) or b["bucket_id"].lower() == q or any(_matches_query(q, a["title"]) for a in b["absorbed_topics"]):
             matched_bucket = b
@@ -271,7 +313,6 @@ def resources(bucket_or_topic, limit=15):
             tmpl_list.extend(b["templates"])
             break
 
-    # If no bucket hit, check specific topic_id / title in resources
     if not res_list:
         for b in d["buckets"]:
             for r in b["resources"]:
@@ -285,7 +326,6 @@ def resources(bucket_or_topic, limit=15):
         cands = [b["title"] for b in d["buckets"] if b["resources"]][:8]
         raise CatalogError(f"no resources matching {bucket_or_topic!r}", cands)
 
-    # Deduplicate and sort: starred first
     seen_urls = set()
     dedup_res = []
     for r in res_list:
@@ -310,7 +350,9 @@ def resources(bucket_or_topic, limit=15):
         "templates": dedup_tmpl[:limit]
     }
 
+
 # ---------------------------------------------------------------- CLI Renderers
+
 
 def _r_domains(rows):
     print(f"{'DOMAIN':<38} {'BUCKETS':>8} {'PROBLEMS':>10} {'TUTORIALS':>10}")
@@ -318,28 +360,34 @@ def _r_domains(rows):
     for r in rows:
         print(f"{r['domain']:<38} {r['n_buckets']:>8} {r['n_problems']:>10} {r['n_resources']:>10}")
 
+
 def _r_buckets(rows):
     print(f"{len(rows)} matching buckets:\n")
     for r in rows:
         b_type = "pv" if r["type"] == "progvar_concept" else ("contest" if r["type"] == "contest" else "utl")
         print(f"  [{b_type:<7}] {r['title'][:54]:<54} {r['n_problems']:>4}p  {r['n_resources']:>3}res  ({r['domain']})")
 
+
 def _r_bucket(b, show_urls):
     b_type = "Progvar Concept" if b["type"] == "progvar_concept" else ("Contest" if b["type"] == "contest" else "UTL Standalone")
     print(f"\n{b['domain']}  ›  {b['title']}  [{b_type}]")
-    print(f"Total problems: {b['n_total_problems']}  |  Tutorials: {b['n_resources']}  |  Templates: {b['n_templates']}")
+    print(f"Total problems: {b['n_total_problems']}  |  Shown: {b['n_returned_problems']}  |  Tutorials: {b['n_resources']}  |  Templates: {b['n_templates']}")
     if b["absorbed_topics"]:
         abs_str = ", ".join(a["title"] for a in b["absorbed_topics"][:4])
-        if len(b["absorbed_topics"]) > 4: abs_str += f" (+{len(b['absorbed_topics'])-4} more)"
+        if len(b["absorbed_topics"]) > 4:
+            abs_str += f" (+{len(b['absorbed_topics'])-4} more)"
         print(f"Absorbed topics: {abs_str}")
     print()
 
     for p in b["problems"]:
         star = "★" if p["is_starred"] else " "
         solves = f"dacu={p['dacu']}" if p["dacu"] else f"solves={p['solved_count']}"
-        print(f"  {star} {p['number']:>3}. {p['source']:<9} {p['name'][:52]:<52} {p['platform']:<12} {solves}")
+        pid = p.get("id", "")
+        diff = p.get("difficulty", 1200)
+        print(f"  {star} {p['number']:>3}. {p['source']:<9} [{pid:<14}] {p['name'][:44]:<44} {p['platform']:<11} diff={diff:<4} {solves}")
         if show_urls:
             print(f"        {p['url']}")
+
 
 def _r_find(r):
     print(f"Query: {r['query']!r} -> {r['n_buckets']} matching buckets, {r['n_problems']} matching problems\n")
@@ -352,18 +400,22 @@ def _r_find(r):
         print("PROBLEMS:")
         for p in r["problems"]:
             star = "★" if p["is_starred"] else " "
-            print(f"  {star} {p['source']:<9} {p['name'][:46]:<46} {p['platform']:<11} in [{p['bucket'][:24]}]")
+            pid = p.get("id", "")
+            diff = p.get("difficulty", 1200)
+            print(f"  {star} {p['source']:<9} [{pid:<14}] {p['name'][:40]:<40} {p['platform']:<11} diff={diff:<4} in [{p['bucket'][:22]}]")
             print(f"        {p['url']}")
+
 
 def _r_problem(p):
     star = " ★" if p["is_starred"] else ""
-    print(f"\nProblem: {p['name']}{star}")
-    print(f"Platform: {p['platform']}  |  Source: {p['source']}")
+    print(f"\nProblem: {p['name']}{star}  (ID: {p.get('id', '')})")
+    print(f"Platform: {p['platform']}  |  Difficulty: {p.get('difficulty', 1200)} ({p.get('difficulty_source', 'catalog_tier')})  |  Source: {p['source']}")
     print(f"Solvers: DACU={p['dacu']}  Global={p['solved_count']}")
     print(f"URL: {p['url']}")
     print("\nAppears in:")
     for oc in p["occurrences"]:
         print(f"  - [{oc['domain']}] {oc['bucket_title']} ({oc['type']})")
+
 
 def _r_resources(r):
     print(f"\nCurated Learning Resources for: {r['query']} ({r['bucket']})")
@@ -384,7 +436,9 @@ def _r_resources(r):
             print(f"  - {tname}")
             print(f"      {t['url']}")
 
+
 # ---------------------------------------------------------------- Main CLI
+
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
@@ -394,39 +448,37 @@ def main(argv=None):
     )
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--json", action="store_true", help="output machine-readable JSON")
-    
+
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    # domains
     sub.add_parser("domains", parents=[common], help="list all high-level curriculum domains")
 
-    # buckets
     p_bks = sub.add_parser("buckets", parents=[common], help="list buckets under a domain")
     p_bks.add_argument("domain", nargs="?", help="filter by domain (e.g. Graphs, Dynamic Programming)")
     p_bks.add_argument("--type", choices=["progvar_concept", "standalone_utl", "contest"], help="filter by bucket type")
 
-    # bucket
     p_bk = sub.add_parser("bucket", parents=[common], help="list problems & resources in a bucket")
     p_bk.add_argument("name", help="bucket name or id (e.g. '0-1 BFS', 'Convex Hull Trick')")
     p_bk.add_argument("--source", choices=["pv", "utl", "all"], default="all", help="filter problems by source")
     p_bk.add_argument("--starred", action="store_true", help="show only curator-starred problems")
-    p_bk.add_argument("--exclude", help="comma-separated list of problem names or URLs to exclude")
+    p_bk.add_argument("--exclude", help="comma-separated list of problem IDs, names, or URLs to exclude")
+    p_bk.add_argument("--min-diff", type=int, default=None, help="minimum CF-scale difficulty (e.g. 1000)")
+    p_bk.add_argument("--max-diff", type=int, default=None, help="maximum CF-scale difficulty (e.g. 1600)")
     p_bk.add_argument("--limit", type=int, help="cap number of problems returned")
     p_bk.add_argument("--urls", action="store_true", help="include direct URLs in text output")
 
-    # find
     p_f = sub.add_parser("find", parents=[common], help="search buckets and problems across both catalogs")
     p_f.add_argument("text", help="search keyword")
     p_f.add_argument("--source", choices=["pv", "utl", "all"], default="all", help="filter by source")
     p_f.add_argument("--starred", action="store_true", help="show only curator-starred problems")
-    p_f.add_argument("--exclude", help="comma-separated list of problem names or URLs to exclude")
+    p_f.add_argument("--exclude", help="comma-separated list of problem IDs, names, or URLs to exclude")
+    p_f.add_argument("--min-diff", type=int, default=None, help="minimum CF-scale difficulty (e.g. 1000)")
+    p_f.add_argument("--max-diff", type=int, default=None, help="maximum CF-scale difficulty (e.g. 1600)")
     p_f.add_argument("--limit", type=int, default=20, help="max results")
 
-    # problem
-    p_p = sub.add_parser("problem", parents=[common], help="inspect a specific problem by name or URL")
-    p_p.add_argument("name_or_url", help="problem title or URL")
+    p_p = sub.add_parser("problem", parents=[common], help="inspect a specific problem by ID, name, or URL")
+    p_p.add_argument("name_or_url", help="problem ID, title, or URL")
 
-    # resources
     p_r = sub.add_parser("resources", parents=[common], help="fetch tutorial primers and code templates for a concept")
     p_r.add_argument("concept", help="bucket title or topic name (e.g. 'Convex Hull Trick', '2-SAT')")
     p_r.add_argument("--limit", type=int, default=10, help="max resources to return")
@@ -434,41 +486,54 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     def parse_exclude(val):
-        if not val: return None
+        if not val:
+            return None
         return [x.strip() for x in val.split(",") if x.strip()]
 
     try:
         if args.cmd == "domains":
             res = domains()
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_domains(res)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_domains(res)
 
         elif args.cmd == "buckets":
             res = buckets(args.domain, args.type)
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_buckets(res)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_buckets(res)
 
         elif args.cmd == "bucket":
             exc = parse_exclude(args.exclude)
-            res = bucket(args.name, args.source, args.starred, exc, args.limit)
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_bucket(res, args.urls)
+            res = bucket(args.name, args.source, args.starred, exc, args.min_diff, args.max_diff, args.limit)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_bucket(res, args.urls)
 
         elif args.cmd == "find":
             exc = parse_exclude(args.exclude)
-            res = find(args.text, args.limit, args.source, args.starred, exc)
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_find(res)
+            res = find(args.text, args.limit, args.source, args.starred, exc, args.min_diff, args.max_diff)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_find(res)
 
         elif args.cmd == "problem":
             res = problem(args.name_or_url)
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_problem(res)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_problem(res)
 
         elif args.cmd == "resources":
             res = resources(args.concept, args.limit)
-            if args.json: print(json.dumps(res, indent=2))
-            else: _r_resources(res)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                _r_resources(res)
 
     except CatalogError as e:
         if args.json:
@@ -485,6 +550,7 @@ def main(argv=None):
         return 3
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

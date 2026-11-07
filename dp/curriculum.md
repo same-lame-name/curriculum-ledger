@@ -1,563 +1,392 @@
----
+# Lesson Guide: Dynamic Programming from the Ground Up
+
 stage: 2
-state: active
-mode: source
-source: courses/dp/sources/article.md
-cards: "courses/dp/sources/problems/ — 66 cards: DPC 26, TDPC 20, NDPC 20"
-goal: "svg's TopCoder DP treatise (Part 1 general aspects, Part 2 optimisation, Part 3 state domains) + the 66 DPC/TDPC/NDPC cards; conceptually complete for CF <= 2000, everything above is named stretch; guided discovery, student attempts every card before any technique hint"
-frontier: verified
-ceiling: "CORE = upstream of CF ~2000; EDGE = 2000-2200 opt-in; STRETCH = named and parked, never blocking"
-created: 2026-10-20
-updated: 2026-10-20
-audit: "2026-10-20 probe: floors confirmed on dependency order (interval nests, forward relaxation on a DAG), loop direction as semantics, 2-group canonicalization, digit tight flag, LCS match guard, complete tree-merge transition set; ceiling pinned at expected value / self-referential equations; tree state derivation unverified (state was supplied in the stem)"
-next: "Teacher opens N1. N10's ladder opens immediately after N3 — it is the only from-zero horizon."
----
-
-# DP — Stage 2 Curriculum Blueprint (svg treatise + 66 cards)
-
-> `stage: 2` · `state: active` · `frontier: verified`
-> Architect-owned. The teacher reads this file **only at node boundaries** and keeps the live board in `courses/dp/course.md`. This file contains no session log — that belongs to `course.md`.
-> Sources: `courses/dp/sources/article.md` (970 lines, svg's TopCoder treatise reposted as CF blog 43256) and the 66 cards in `courses/dp/sources/problems/`.
+source: courses/dp/sources/ (`article.md` = TopCoder treatise Parts 1–3; `problems/` = 66 cards; `solutions/` = 57 verified C++ files)
+scope: AtCoder DPC A–Z, TDPC A–T, NDPC A–T. **Done = cold-solving CF ≤ 2000 DP problems.** Tiers below: **CORE** (≤ ~2000), **EDGE** (2000–2200, kept because the idea transfers downward), **STRETCH** (> 2200, optional vault). Ratings are my ordering hints, not copied from the judge.
+probed: 2026-10-24 · 9 graded probes (7 mechanisms confirmed, 2 expectation probes returned "don't know") + one auditor pass. Traces in `courses/dp/sessions/2026-10-24.md`.
 
 ---
 
-## Verified Frontier Baseline
+## Where the Student Stands
 
-**Confirmed floor** (audited; do not re-teach, only re-verify where marked FRAGILE):
-- Dependency/traversal order in every probed form: backward interval DP with all four loop nests analysed correctly; forward relaxation on a DAG (spotted the non-topological label order and the read-before-finalised bug); the consequence of reading an unfinalised state.
-- Loop direction as problem semantics: descending capacity = 0/1, ascending = unbounded; coin-outer vs capacity-outer = unordered vs ordered. Both articulated from the mechanism, not memorised.
-- Canonicalisation factor for 2 groups: 14 labelled splits → 7 unordered. **FRAGILE — rests on a single click. Re-verify at 11b.**
-- Digit DP tight flag derived from the sufficiency test; the all-zero subtraction reasoned correctly (the *click* was wrong → FRAGILE, C4).
-- LCS match guard: identified that an unguarded `+1` yields `min(len(s),len(t))`.
-- Complete tree-merge transition set for a component constraint, including cut transitions, built even against an incomplete prior board. **FRAGILE — single click. Re-verify at 12b.**
+### Solid on (verified — lean on these directly, do not re-lecture)
 
-**Pinned ceiling:** expected value / self-referential equations. Answered "I don't know" to `E = 1 + (1/3)E` after an earlier 2-state failure (two variables for one state, dropped branch). No template for `E = 1 + Σ p·E(next)`, no self-loop elimination. **N10 is from-zero and must not be compressed.**
+- **State sufficiency: "what must the future remember."** Non-adjacent-sum table correct (`0, 5, 5, 9, 14`), and explained unprompted that `dp[i]` does *not* record whether house `i` was robbed — the **transition** buys back correctness. On the walk probe ("4 steps of ±1, never the same step three in a row") answered `10` of `16`, **invented** `(steps, +1-run, −1-run)` without prompting, and said the `(position, steps)` state "makes no sense for this problem." This is the rarest of the skills on the list: they invent sufficient states, not just execute given ones.
+- **Dependency order.** Diagnosed that row-major filling of an interval table reads an unfilled row of zeros, and produced **two** valid orders independently (decreasing `i` + increasing `j`; increasing interval length). Also volunteered that recursion enforces order for free and that iteration must be checked by hand.
+- **Summarising a window / expiry.** Explained that "max so far" cannot represent that its maximum *left* the window — in their words, the summary handles "domination" but has no representation of "natural death" — and concluded that range **sums** collapse to prefix differences while range **maxima** need expiry tracking.
+- **Sentinel & budget discipline.** On a rotated knapsack table (`minW[16] = 11`, `W = 9`) required `minW[v] <= W` in the final scan, not merely `minW[v] != INF`, and recognised that the rotation moves the capacity constraint into the read-out test.
+- **Win/lose impartial games.** Correct `L/W` table for moves `{1,3,4}` and correct verdict that `n = 7` is losing. *(The teacher's answer key was wrong on this probe and was corrected on the board; the student was right. Never treat this as a student error.)*
+- **Set-as-state, execution.** Traced a 3-worker/3-job `dp[mask]` table layer by layer over `popcount`, got `8`, and recovered the optimal assignment. Execution is solid; **invention** of a mask is untested (see Ch. 8).
+- **Counting discipline (multiset vs ordered).** Counted multisets of `{1,2,5}` summing to `9` correctly (8), volunteered the recurrence (coins outer, change ascending, in place), and explained that **the loop order** is what makes it a multiset count rather than a sequence count.
 
-**Unverified:** state *derivation*. The tree probe handed over `dp[v][0/1]` in the stem, so it tested transition completion, not discovery. The marked-tree instance is **not** evidence for state design. State derivation is first contact at N1, with the tree independent-set drill as the fallback (C2).
+### Build from the ground up
 
-**Misconceptions to dismantle:**
-- Expectation: no separation between the certainly-paid step and the branch outcomes; invents extra variables per state; drops branches. → N10, rules E1/E3.
-- Sentinel arithmetic: mechanism understood when articulated, bookkeeping slips. Needs a fully specified board before any question. → N3 (C5 board contract).
-- State design: initially reached for a *count* of marked vertices instead of a reachability bit (repaired in dialogue, still unproven). → N1, N12 fallback.
-- Answer integrity: twice produced correct free-text reasoning while selecting a contradicting option (sentinel `2e9`; digit "subtract 1" vs click `3`). **The note is the datum; the click is unreliable.** → C4 everywhere.
+- **Expectation and self-referential probability: zero footing.** Two probes. The first (expected flips to see `HH`) returned "I don't know". The second was fully specified on the board — 3-node chain, every transition given, `E_k` defined, `E_3 = 0` supplied — and *still* returned "I don't know" with "I am very rusty with expected-values". So the break is not "self-loops are confusing"; it is at **step zero: writing `E[state] = 1 + Σ p_i · E[next_i]` at all**, and then handling a state that can return to itself. The article does not cover this (probability appears in one sentence, as a "combinatoric" flavour), so Ch. 7 is 100% board-built. Nothing downstream needs it except TDPC J in Ch. 8 — so Ch. 7 may take as long as it needs.
+- **Implementation: zero code written at intake.** Every mechanism above was verified in prose. Writing, compiling, debugging and submitting in the Arena is a skill the probing never exercised, and the student explicitly says implementation matters. Ch. 1 therefore opens with the AC ritual in the Arena (`arena_run`), not with a lecture, and from Ch. 1 onward no recurrence is allowed to live only in prose.
+- **Invention vs execution.** Mask *execution* is verified, mask *invention* is not. The same is true of tree boundary states, digit states, profile states, interval splits, exchange arguments, and `3^N` partition enumeration. Chapters 6 and 8–13 must be run as **discovery**, never as confirmation. Expect the first attempt on each to be incomplete — that is the intended state, not a failure.
+- **Small-system algebra.** Feasibility/sentinel arithmetic is verified; solving a linear system, or recognising "the recurrence references its own state, so move that term to the left", has never been tested and is the single hardest new manipulation in the course.
+
+### Habits to watch in problem solving
+
+- **Compressing a trace step into an arrow.** `f(5) → f(2)` with the target's value left implicit is exactly the ambiguity that produced the wrong game key. Live fix: every board trace must name the target value explicitly, and from Ch. 1 on ask for the **printed table** rather than the summary. This bites hardest in Ch. 7 (chains of expectations) and Ch. 6 (split transitions).
+- **"I don't know" is an honest signal, not a stall.** Never re-ask the same stem louder or add options. Shrink the step until it is answerable. Two "don't know"s on one stem means the ladder is missing a rung — add one below.
+- **Invariant-first reasoning** ("what does the future ask for") is the strongest asset. Phrase every new domain the same way: *what crosses this boundary?* — a cell edge (Ch. 2), an interval split (Ch. 6), a tree edge (Ch. 9), a column frontier (Ch. 13). The vocabulary already exists; reuse it instead of introducing new jargon.
+- **Prose code with small slips** (`++c` for `++ch`). Harmless in conversation, fatal in an editor. Type it, compile it, run the sample — and add one hand-built edge case (`N = 2`, `K = 0`, blocked start, `D` not divisible).
+- **Wants "where it breaks" and "what it transfers to" for every problem, and does not want to rush.** The *Sharp edges* and *Transfers to* bullets below are the answer sheet for that request; an AC is the middle of a problem, not the end. Budget sessions generously and let a chapter run long.
+
+### Implementation track (untested — the ladder, one first per chapter — and **Ch. 1 must end in a real AC**, not prose: compile → run → submit. No recurrence in this course is allowed to live only in a message.)
+
+| Chapter | First contact with the compiler |
+|---|---|
+| 1 | compile → run → submit; `long long` vs `int` from the constraint line; INF sentinel; `N = 2` |
+| 2 | modulo addition; rolling rows; recursion depth at `N = 1e5` (iterative, or the judge's stack dies); clearing per test case |
+| 3 | in-place descending loop; `bitset` shift-reachability (TDPC A); INF = `4e18` so `INF + w` cannot overflow |
+| 4 | backtracking reconstruction; a `3000 × 3000 int` table is 36 MB (fine) — say the number out loud before allocating |
+| 5 | negative mod `((a-b)%MOD+MOD)%MOD`; prefix arrays sized `K+2`; `deque` under a 1e6 input |
+| 6 | half-open vs closed interval indexing — pick one and write it in the comment; `long double` accumulation |
+| 7 | floating point in and out (`setprecision(15)`); solve a 2×2 system on paper before coding it |
+| 8–9 | a `2^21` table (8 MB of `int`); iterative postorder + explicit order array at `N = 1e5`; `long long` scores that can be negative |
+| 10–13 | matrix multiply mod (identity for `A^0`); binary-lifting tables; reading `K` as a `string`; a 64-bit answer **with no modulus** |
 
 ---
 
-## [COURSE_CONTRACT]
-
-1. **Attempt before hint.** Every card: the student reads the statement and produces a state sentence, a transition inventory, and a complexity claim *before* the teacher names any technique. The teacher's first move on every card is a question, never an explanation.
-2. **Statement only, editorial closed.** The cards ship with editorials and verified C++ (`sources/solutions/`). Neither enters the room until the student has a passing solution or has explicitly surrendered. Surrender is recorded in `course.md` with what was missing.
-3. **One question per board step.** No stacked questions, no multi-part stems. Each gate item is one thing to write down.
-4. **Answer-integrity protocol (C4).** On any boundary/sentinel/precision item: demand the one-line reason **before** accepting a click. Any click that contradicts the written note is re-asked as a prediction ("write the value the loop leaves in `dp[v][0]`") before it is scored. A floor that rests on a single click is marked FRAGILE in its node entry and re-verified at its practice block.
-5. **Fresh-instance rule (C6).** No exit gate reuses an audit instance, and no retry reuses the previous gate's numbers. Every CORE gate is a new asymmetric input with 3–5 elements. The student's own "unfamiliar CORE card" marking is used to **order** probes, never to skip them.
-6. **Ceiling and stretch policy.** CORE nodes are the course. EDGE (N20) is opt-in after the CORE loop closes. STRETCH (N21, N22, plus the parked cards) are named so they can be refused honestly; they never block the ~2000 line and are never used as a gate.
-7. **Floors are verified, not re-taught.** A node marked `FLOOR` gets one sitting: a boundary drill plus its gate. If the gate passes first try, move on; if it fails, the node is promoted to `BUILD` on the spot.
-
----
-
-## [HORIZON_DAG]
-
-Each horizon isolates one generating bottleneck. A node inside a horizon is a lesson; the horizon is the reason the lesson exists. Numbering is **identity-stable across stages** (so audit references keep resolving), not a session order.
+## Concept Dependency Map
 
 ```mermaid
 graph TD
-  N1["N1 state = the future question"] --> N2["N2 order / loop nest"]
-  N2 --> N3["N3 sentinel arithmetic"]
-  N2 --> N4["N4 capacity axis + loop direction"]
-  N4 --> N5["N5 sum vs min, ordered vs unordered"]
-  N2 --> N6["N6 last-choice identity: label then rank"]
-  N4 --> N7["N7 window aggregate"]
-  N6 --> N7
-  N2 --> N8["N8 split point + length order"]
-  N8 --> N9["N9 games: difference state"]
-  N2 --> N10["N10 expectation: certain step + self-loop (FROM-ZERO)"]
-  N3 --> N10
-  N1 --> N11["N11 used-set resource: masks + partitions"]
-  N2 --> N12["N12 tree post-order + parent flag"]
-  N12 --> N13["N13 rerooting"]
-  N2 --> N14["N14 the graph is the order (DAG/SCC)"]
-  N14 --> N15["N15 layers + matrix power + accumulator"]
-  N4 --> N15
-  N7 --> N16["N16 bound as a flag (digit DP)"]
-  N1 --> N17["N17 decided/undecided boundary (profile)"]
-  N11 --> N17
-  N4 --> N18["N18 exchange argument"]
-  N4 --> N19["N19 index by the objective"]
-  N7 --> N20["N20 query-shaped aggregates (EDGE)"]
-  N11 --> N20
-  N11 --> N21["N21 transforms (STRETCH)"]
-  N20 --> N21
-  N8 --> N22["N22 pricing + concavity (STRETCH)"]
-  N19 --> N22
+  F["State · transition · base · order"] --> C1["1. 1D scans<br/>DPC A,B,C"]
+  F --> C2["2. Grids & DAGs<br/>DPC H,G · NDPC B,H"]
+  C1 --> C3["3. Budget / knapsack<br/>DPC D,E · TDPC A"]
+  C1 --> C4["4. Two sequences<br/>DPC F · NDPC C"]
+  C3 --> C5["5. Prefix sums & windows<br/>DPC M,T · TDPC F,L"]
+  C2 --> C5
+  C5 --> C6["6. Intervals<br/>DPC N,L · TDPC B,I"]
+  F --> C7["7. Games, probability, expectation<br/>DPC K,I · TDPC C,D,J"]
+  C6 --> C7
+  C7 --> C8["8. Subsets<br/>DPC O,U · TDPC J"]
+  C8 --> C9["9. Trees<br/>DPC P,V"]
+  C8 --> C10["10. Layers & matrices<br/>DPC R · NDPC E · TDPC M"]
+  C4 --> C11["11. Sort & sweep<br/>DPC Q,X,Y · TDPC K"]
+  C5 --> C11
+  C5 --> C12["12. Digits<br/>DPC S · TDPC E · NDPC D"]
+  C8 --> C13["13. Profiles<br/>NDPC A"]
+  C5 -.-> S1["Stretch: CHT, lazy segtree<br/>DPC Z,W"]
+  C9 -.-> S2["Stretch: tree knapsack,<br/>rerooting-heavy, top tree"]
+  C8 -.-> S3["Stretch: SOS, zeta, 3^N,<br/>bitmask automata"]
+
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef full fill:#fff4e0,stroke:#e08200,color:#7a4a00
+  classDef gap fill:#fde7e7,stroke:#c62828,color:#8e1b1b
+  class F,C1,C2,C3 ok
+  class C4,C5,C6,C8,C9,C10,C11,C12,C13 full
+  class C7 gap
 ```
 
-Refinements vs Stage 1: `N3 → N10` (a probability state must distinguish 0 from impossible), `N11 → N17` (a profile is a mask over the cut), `N14 → N15` (matrix power over a condensation). `N10` depends only on N1+N2, which is why it may start immediately after N3.
-
-| # | Bottleneck in one sentence | Nodes | Student status | Primary cards |
-|---|---|---|---|---|
-| H1 | A DP is correct only if the state determines the future and the traversal respects the dependency DAG; sentinels are part of that contract | N1–N3 | N2 floor · N1 first-contact · N3 first-contact | DPC-A/H/F, DPC-D, TDPC-A |
-| H2 | What the transition aggregates and the axis it runs over are design choices; reuse is encoded by loop direction | N4–N5 | N4 floor · N5 fragile | DPC-D, DPC-Y, TDPC-A, TDPC-H |
-| H3 | The identity of the last element reduces to its rank among elements seen so far | N6 | build | DPC-C, DPC-T |
-| H4 | When the transition ranges over a contiguous window, maintain the aggregate instead of rescanning | N7 | build | DPC-M/Q, TDPC-F/K/L |
-| H5 | The last operation splits; both halves must exist, so the order is interval length | N8 | floor (compress) | DPC-N, TDPC-B |
-| H6 | In a zero-sum alternating game the future only needs the score difference | N9 | build | DPC-K/L, TDPC-B |
-| H7 | A random process whose move can fail to change the state is an equation with a self-term, not a recurrence | N10 | **from-zero** | DPC-I/J, TDPC-C/D |
-| H8 | "Which elements are used" is a resource; partitions need a canonical decomposition | N11 | fragile + build | DPC-O/U |
-| H9 | A subtree's answer must expose exactly what the parent asks about the component crossing the edge | N12–N13 | N12 fragile · N13 build | DPC-P/V, TDPC-P |
-| H10 | The input's order (topological, layered) *is* the DP order; cycles need contraction or exponentiation | N14–N15 | N14 floor · N15 build | DPC-G/R, NDPC-B/E |
-| H11 | An upper bound is a boolean flag; the rest of the state is arithmetic residue/carry | N16 | floor + build | DPC-S, TDPC-E, NDPC-J/D |
-| H12 | For grid-like objects the state is the boundary between decided and undecided | N17 | build (late) | NDPC-A |
-| H13 | The item order can be a theorem about the input, proved by pairwise exchange | N18 | first-contact | DPC-X |
-| H14 | If one coordinate is monotone in the objective, index by the objective | N19 | build (late) | DPC-E, NDPC-H |
-| H15 | The queried set's shape picks the structure | N20 | edge | DPC-W, DPC-Z |
-| H16 | Change the index set so a convolution becomes pointwise | N21 | stretch | NDPC-M/L/K/Q |
-| H17 | Price a constraint with a multiplier; exploit concavity | N22 | stretch | NDPC-O, NDPC-N |
+Green = mechanism verified in probing (chapters become short **confirmation-in-code**, not lectures). Amber = at or beyond the frontier (**full depth**, discovery run). Red = the confirmed break.
 
 ---
 
-## [NODE_MAP]
+## How the Article Is Woven In
 
-Legend — `FLOOR`: audited command, drill only. `FRAGILE`: floor resting on one click, re-verify in situ. `FROM-ZERO`: no template exists, build by ladder. `FIRST-CONTACT`: the node owns the first exposure, never cite as foundation. `BUILD`: normal treatment.
+The treatise is a **reference and confirmation text**, never a reading assignment ahead of the problems. Rule: attempt the problem that creates the need, then read the matching section to hear the idea in a second voice and check vocabulary. Reading first destroys the chapter.
 
-Two mandatory deviations from numeric order:
-- **N10 opens right after N3.** It is the only from-zero horizon, it depends only on N1+N2, and its cards (DPC-I/J, TDPC-C/D) are gated behind it.
-- **N2 and N8 are floor-confirmed** and each cost one boundary sitting. Their contents below are autopsies and drills, not derivations. Audit constraint C1 is satisfied by this ordering.
+| Article section | Fed into | Use it for |
+|---|---|---|
+| Part 1 — general aspects (coins, LCS, forward vs backward, reconstruction, combinatoric DP, optimal substructure / TSP counterexample) | Ch. 1–4 (coins → Ch. 3; LCS + reconstruction → Ch. 4) | Vocabulary: state/transition/order, neutral values, reconstruction. The TSP counterexample is the clearest "the state is insufficient" story in the source — read it in Ch. 8, right after the mask state has been invented. |
+| Part 2 — equivalent states, pruning, two layers, rotation, matrix power, data structures | Ch. 5 (precalculate), Ch. 8 (equivalence → subset merge), Ch. 10 (matrix power, and the TourCounting accumulator), Ch. 14 (rotation) | The optimisation mindset: **change the storage, not the recurrence.** For this student, "equivalent states" is the one Part 2 idea not yet tested by any probe. |
+| Part 3 — state domains (linear, subsets, substrings, subtrees, layer + profile) | Ch. 1, 8, 6, 9, 13 | The state-domain taxonomy, once the student has met one instance of each. |
 
----
+**What the article does *not* contain — these chapters are entirely board-built:**
 
-### N1 · A state is the future's question — not a summary of the past  `CORE · FIRST-CONTACT (state derivation)`
+- **Expectation, probability systems, games** (Ch. 7). Probability gets one sentence ("or the probability that the event happens"); `E[s] = 1 + Σ p E[next]`, self-loop cancellation and impartial games appear nowhere. This is the student's confirmed break and there is no page to fall back on.
+- **Sliding-window maxima / monotone deques** (Ch. 5). Prefix sums are covered (the RoadOrFlight example); the *expiry* structure is not.
+- **Sorting and exchange arguments** (Ch. 11). Rotation is covered; "fix an order by a pairwise swap" is not.
+- **Digit DP** (Ch. 12). Absent entirely.
+- **Profile DP** (Ch. 13). Part 3 has a profile section, but the state enumeration is assumed and the complexity asserted.
 
-- **Anchors:** L25–63 (coins: `mink[P]` is only ever read at `P−W`), L118–125 (memoisation is the same recurrence, lazily), L271–277 ("equivalent states" = identical future), L666–740 (a subtree state must expose the parent's question).
-- **Primary cards:** DPC-A Frog 1, DPC-H Grid 1. **Practice-only:** DPC-B (same shape, one more bound).
-- **Motivating Fracture:** `dp[i]` answers Frog 1. Add "you may not land on the same stone twice": the array still compiles, still runs, and now answers a different problem, because the extension step spends a resource (which stones were used) that `i` never recorded. Nothing in the code looks wrong.
-- **Core Invariant:** a state is legal iff the set of legal continuations of the state equals the set of legal continuations of the problem restricted to that prefix. Everything the transition spends must be in the state; nothing else may be.
-- **Contest Signature:** one index plus moves that only look forward → scalar state. Any clause naming *which* earlier things were used/touched ("each at most once", "must pass through", "at least one of", "already visited") is the missing coordinate, handed to you by the statement.
-- **Boundary & Sentinel Contract:** `dp[0]=0`, everything else `+INF`; `INF` must lose every `min`; never relax *from* an unreachable state; `dp[0]` means "cost 0 at the start", not "cost 0 everywhere". Grid 1: `dp[0][0]=1`, first row/column propagate only from the left/up, a blocked start cell kills the whole table.
-- **First contact (C2, non-negotiable):** bare Frog 1 statement with **no proposed state on the board**. Then: "you may not land on the same stone twice — what is the smallest thing you must add?" Accept only an answer phrased as the future's question ("where I have been", "whether I touched X"). If the answer is a count, a total, or a raw visited *set* where a bit suffices, run the same drill on a bare tree independent-set statement ("paint black/white, no two adjacent black — what must the state carry?") **before N12 opens**.
-- **Exit gate (fresh, asymmetric):** stones with `h = {0, 40, 10, 30, 20}` (5 stones), jumps of length 1 or 2, cost `|h_i − h_j|`, **and you must land on stone 3 at least once**. Write: the state tuple, its meaning as one sentence, the base, the transition, the answer state. Expected shape `dp[i][b]`, `b' = b | (landed == 3)`, answer `dp[4][1]` (the value is 20, via `0→2→4`). Then: "does `b` need one bit or three?" — the minimum is the invariant.
-- **Practice 1b — `Anchor`:** Frog 1 and Grid 1 written from the state sentence alone (no recurrence given), then break each with one "which cells/stones" clause and name the minimal added coordinate.
+Article-level gaps to fill at the board: the accumulator-variable trick in matrix exponentiation appears only inside the TourCounting example (Ch. 10); the "5th constraint" in GameWithGraphAndTree refers to a constraint list missing from the excerpt; the profile complexity is asserted, not derived; Knuth's conditions are asserted, not stated. Details in the private notes.
 
 ---
 
-### N2 · Order is part of the answer  `CORE · FLOOR (one boundary sitting; no rebuild)`
+## Practice Tracks (deliberate practice, not topic decomposition)
 
-- **Anchors:** L65–117 (LCS), L157–206 (forward vs backward, `relax`), L207–260 (reconstruction), L583–608 (lexicographic order).
-- **Primary card:** DPC-F LCS (including reconstruction). **Practice-only:** DPC-A (forward relaxation on a chain), DPC-G (read-only: find the non-topological label ordering).
-- **Motivating Fracture:** the recurrence is right and the answer is wrong because a state was used before its last write. The article's own forward LCS writes a phantom row and column, and its reconstruction walks `prev[s]` with no reachability check.
-- **Core Invariant:** every edge of the state graph points forward in the traversal; forward-style relaxation is legal iff no later write can improve a state already used as a source. *(Audited floor — the student reproduces this in all probed forms. Do not derive it again.)*
-- **Contest Signature:** reads `(i−1,j)`, `(i,j−1)`, `(i−1,j−1)` → lexicographic; a single read at `(i−1,j+1)` → anti-diagonal; input is a graph → topological order (N14).
-- **Boundary & Sentinel Contract:** base row **and** column; transition bounds `i<n1 && j<n2` vs `<=`; string 0-indexed vs table 1-indexed; phantom `(n1+1,n2+1)` created by equal NUL terminators (F2); reconstruction needs `np <= s` and `mink[s] < INF/2` before tracing (F4).
-- **Sitting content:** F2 autopsy (name every escaping write), F4 guards, one "read before final" trace. No loop-nest teaching.
-- **Exit gate (fresh):** `s="abc"`, `t="zabc"` (3 vs 5 chars, last real chars equal, terminators equal). (1) List every out-of-range write the article's bounds produce. (2) Give the LCS length and the reconstruction with an exact-size `vector<vector<int>>(n1+1, vector<int>(n2+1))`. (3) Second instance `s="aaaa"`, `t="bbbb"`: the reconstruction must print nothing and must not read `prev`. Pass = all three with the reason said aloud.
-- **Practice 2b — `Boundary`:** forward LCS with an assertion that every read cell was finalised; exact-size vectors so the phantom write aborts loudly; then the empty-LCS reconstruction.
+**Why this exists.** The scope line says *Done = cold-solving CF ≤ 2000 DP problems*. The 41 chapter problems install about twenty tools. They do not buy recognition at 2000, and the student's own diagnosis from probing — *"what my brain assumes automatically… reasoning through an already visited forest"* — puts the bottleneck on recognition, not derivation. Chapters are deliberately **blocked** practice: install one mechanic, then the next. 
 
----
+**Rule zero — no pre-committed problem list.** The *checkpoints and rules* are fixed here; every individual problem is chosen **just-in-time** by `problem-recommender` at the checkpoint. A problem picked at planning time is calibrated to that day's ceiling; by the day it is used the ceiling has moved, so it arrives either too easy or too hard.
 
-### N3 · Impossible is a number too  `CORE · FIRST-CONTACT (sentinel board contract)`
+**Tier 1 — Chapters (blocked, the 41).** As specified chapter by chapter below. Purpose: install one mechanic per chapter, exit test per chapter. Of the 41, 30 are CORE and 11 are EDGE; the EDGE ones are droppable when a chapter is going badly, because the mechanic is carried by the CORE problems.
 
-- **Anchors:** L126–135 (neutral element ±infinity), L279–296 (pruning = distinguishing impossible), L852–880 (BlockEnemy's `nres`).
-- **Cards:** this node owns none — it is a sentinel/instrumentation node, and it drills the initialisation and merge conventions of cards owned elsewhere. **Practice-only:** DPC-D (exact `−INF` init, owned by N4), TDPC-A (reachability counts init 0/1, owned by N4), DPC-U (negative `a_ij` so `0` is not a valid max base, owned by N11), DPC-E (exact-value init), TDPC-H (three states, two impossible at a leaf).
-- **Motivating Fracture:** `INF` gets added, doubled and merged. Once it overflows or gets "improved", an impossible state starts winning. BlockEnemy's `nres[0] = res[v][0] + res[s][0]` with two `1e9`s is exactly one merge away from a negative number (F18).
-- **Core Invariant:** for every operation the DP applies, `sentinel ⊕ delta` must stay strictly worse than every real value. `0` is a legal count and a legal score, so it can never mean "impossible" in a sum-DP or in a max-DP with negative values.
-- **Contest Signature:** min over an empty candidate set; "print −1 if impossible"; values that can be negative; merges that *add* two child results; counting DP where the true count can be 0.
-- **Boundary & Sentinel Contract:** `memset(...,63)` → `0x3F3F3F3F = 1_061_109_567` (safe for one add, not two); `memset(...,−63)` → `0xC1C1C1C1 = −1_044_266_559`; `INF/2` read guard; strict `<` vs `<=` in `relax`; clamp after each add vs `long long`; `INF + w` vs `INF`.
-- **Board contract (C5, non-negotiable):** before *any* arithmetic question about a merged tree DP, the board must show all four of:
-  1. the exact `INF` constant **and** its type width (`int` 2.147e9 / `long long`),
-  2. the initial pair for a **marked** vertex and for an **unmarked** vertex,
-  3. the exact assignment from the merge accumulator `nres` back into `dp[v][0]` / `dp[v][1]`,
-  4. which merges can meet two impossible values.
-  No full table → no question. The audit's first "I don't know" was a misspecified stem, not a knowledge gap.
-- **First contact:** the board above. The drill is *writing the table*, not re-explaining sentinels — the mechanism is understood, the bookkeeping slips.
-- **Exit gate (fresh, asymmetric; write the number before clicking):** tree `1–2, 1–3, 3–4, 3–5` with marks `{2,4}`; merge order chosen so one child contributes `INF` into a real value and later two `INF`s meet. Predict the value left in `dp[1][0]`, then rerun with `INF = 1e8` and predict again. Pass = written number **plus** the one-line reason (C4).
-- **Practice 3b — `Boundary`:** BlockEnemy's merge with three levels, two `1e9`s meeting at level 2; predict the overflow, fix by clamp; then `long long INF = 4e18` and show the read guard is still needed.
+**Tier 2 — Interleaved reps (unlabeled, chunky).** A checkpoint after **every chapter from 4 onward**:
 
----
+| checkpoint | Ch 4 | Ch 5 | Ch 6 | Ch 7 | Ch 8 | Ch 9 | Ch 10 | Ch 11 | Ch 12 | Ch 13 |
+| ---------- | ---- | ---- | ---- | ---- | ---- | ---- | ----- | ----- | ----- | ----- |
+| reps       | 2    | 3    | 3    | 4    | 4    | 5    | 5     | 6     | 6     | 6     |
 
-### N4 · The capacity axis, and the direction that means "reuse"  `CORE · FLOOR (drill the init and the 1D rewrite)`
+Reps ascend because there is little to confuse early and a great deal late. That is 44, plus a closing all-mechanics block of ~25 drawn from all thirteen chapters: **≈ 70 interleaved — floor 60, no upper target.** The count is an outcome of the checkpoints, not a number to hit.
 
-- **Anchors:** L553–582 (row-by-row knapsack, no in-place form), L297–310 (two layers), L311–317 (precalculate).
-- **Primary cards:** DPC-D Knapsack 1, TDPC-A Contest, TDPC-H Knapsack. **Practice-only:** DPC-E (reserved for N19). Frog 2 (`DPC-B`) is read here only as "the bound is a second axis"; its home is N7.
-- **Motivating Fracture:** the article's row-by-row code is correct but never says why, and never shows the 1D form everyone writes. Flipping one loop bound silently converts 0/1 into unbounded.
-- **Core Invariant:** row `i+1` reads only row `i`, so the two rows are disjoint. In place, descending `j` reads only not-yet-updated (previous-item) entries; ascending `j` lets the current item be taken again. *(Direction semantics audited — drill only.)*
-- **Contest Signature:** `N ≤ 100, W ≤ 1e5` or a small sum of weights → capacity axis. `W ≤ 1e9` with small values → N19. "Each item once" vs "unlimited supply" is a loop direction, not a new recurrence.
-- **Boundary & Sentinel Contract:** `j >= w` vs `j > w`; `dp[0]=0` rest `−INF` (exact) vs all zeros (at-most); answer `dp[W]` (exact) vs `max_j dp[j]` (at-most); the `w_i > W` guard; `W = 0`; the 1D array must be re-zeroed per test case.
-- **First contact (C3, exact-vs-at-most):** board `w={2,3,4}, v={3,4,5}, W=6`. Fill both inits and report `dp[1]`: exact must be `−INF` (nothing sums to 1), at-most must be 0. Then `dp[6] = 8` for both — the lesson is that the **answer index** differs, not the value.
-- **Exit gate (fresh, verified numbers):** items `(w,v) = (2,3), (5,8), (3,4)`, `W=9`. (1) Exact table: `dp[1] = dp[9] = −INF` (reachable sums are 0,2,3,5,7,8,10 — 9 is missing). (2) At-most: answer 12 (`{5,3}`). (3) Flip to ascending `j` from the at-most init: answer 14 (`5+2+2`), and say which problem it now solves. Pass = all three with reasons.
-- **Practice 4b — `Twist`:** one 1D array, two loop directions, three outputs predicted before running.
+**Band.** Tracks the frontier, not a fixed range: Ch 3–6 → CF 1300–1600; Ch 7–10 → CF 1500–1800; Ch 11–13 → CF 1700–2000; the closing block → 1600–2000, wide on purpose, because a contest set is wide.
+
+**Two hard rules.**
+- The mechanic is **not named**. The teacher neither confirms nor denies a proposed state until the student has committed to one.
+- A rep does not count unless the student **names the state axis before writing code** — once they commit to a state axis, launch the rep into the Arena (`arena_run` with `purpose: "checkpoint"`, `blindMetadata: true`).
+
+Purpose: selection. Blocked practice produces a student who is fast at a named tool and slow at naming it.
+
+**Exit gate for tier 2.** Three fresh CF-1800 DP problems, no hints, no editorial until all three have been attempted. **2 of 3 AC** → the tools and the selection are real; the student's own volume grind is safe to run. **0–1 of 3** → tier 2 is not finished; add reps, do not proceed.
+
+**Constructing a checkpoint request (JIT).** Every request states four things: the chapter boundary; the band from the schedule above; `EXCLUDE_PROBLEMS` = every ✓ in `course.md`, every already-assigned problem, and the Arena solve ledger (`arena_ledger`); and a **confusion constraint** — the problem must be one whose second-most-plausible mechanic is a named alternative, drawn from whichever mechanics the failure log says are currently least settled. Which chapters a checkpoint may draw from is simply *all chapters so far*. Nothing is stored; the request is built when the checkpoint arrives.
+
+The **failure log** therefore starts at the first rep, not at the end of the course: one line per rep — the state the student chose, the state that was needed, and whether the gap was recognition or execution. It is the only input to the confusion constraint, and it is what makes the request live rather than pre-computed.
+
+**Re-check the counts** at Ch 7 (the expectation break) and Ch 13. They are an estimate, not a contract.
 
 ---
 
-### N5 · Sum is not min, and "ordered" is a loop-nesting choice  `CORE · FRAGILE (canonicalisation floor = one click)`
+## Topic-by-Topic Guide
 
-- **Anchors:** L136–156 (combinatoric DP, the 74-way table), L279–296 (skip zeros — but zero is a real count), L271–277 (merge equivalent states).
-- **Primary card:** DPC-Y Grid 2 (count with a canonical "first violated cell" → subtraction). **Practice-only:** TDPC-A (count *sums* with multiplicity), DPC-M (distributions over labelled children).
-- **Motivating Fracture:** the article's coin table counts *sequences* of coins while the prose sounds unordered; swapping the two loops counts multisets. Both are correct for something — the loop nesting *is* the definition of what is being counted, and nothing in the code says which one you meant.
-- **Core Invariant:** a sum-DP counts each object once iff the decomposition has a canonical distinguished choice (the last coin, the lowest set bit, the first violated cell). Without one, the count is inflated by the symmetry factor — `k!` for `k` interchangeable groups. *(The 2-group case is an audited floor; the general `k!` is not.)*
-- **Contest Signature:** "number of ways", "mod 1e9+7", "choose a subset / partition / distribution". The words *sequence* vs *set* decide the loop order; "at least once" clauses invite subtraction over the first hit.
-- **Boundary & Sentinel Contract:** base `dp[empty] = 1` (one way to do nothing) vs `0` (impossible) — different objects in a sum-DP; subtraction needs `(a−b+MOD)%MOD`; the 74-way table's base is `mink[0] = 1`; Grid 2 sorts obstacles by `(i,j)` and subtracts `paths(before) × paths(before→here)`, which counts each path once at its first obstacle.
-- **First contact (C3, `k!` for `k>2`):** partition `{1..6}` into 3 unlabelled pairs → 15. An ordered-groups DP gives 90 = 15·3!. The board question is "what exactly does your loop count?"
-- **Exit gate (fresh):** (1) coins `{2,3}`, target 7: predict the multiset count (1) and the sequence count (3) by hand, then produce each with a one-line loop swap. (2) Grid 2 on a 3×3 board with one obstacle at (2,2): total 6, through-obstacle 2·2 = 4, answer 2. Pass = both numbers plus which decomposition was canonical.
-- **Practice 5b — `Boundary`:** reproduce the article's 74; then the multiset count for the same input; then Grid 2 with the obstacle at the start or the goal (answer 0).
+### 1. A state is a promise about the future (1D scans)
 
----
+- **Problems:** [Frog 1 — DPC A](https://atcoder.jp/contests/dp/tasks/dp_a) [CORE, ~800] · [Frog 2 — DPC B](https://atcoder.jp/contests/dp/tasks/dp_b) [CORE, ~900] · [Vacation — DPC C](https://atcoder.jp/contests/dp/tasks/dp_c) [CORE, ~900].
+- **Frontier note:** The mechanism is **verified** — no lecture, and no probing either. This is the **code session**: A is the AC ritual (read input, loop, print, submit); B adds a `for k in 1..K` predecessor loop (`K ≤ 100`, `O(NK) = 10^7`, no window structure needed — that temptation belongs to Ch. 5); C is the only concept beat, and it should take under two minutes: *what does the future need that one number per position cannot answer?* ~1 session. **Exit test:** A, B, C all AC; C's answer is a max over three final states, not `dp[N][0]`.
+- **Why the naive way breaks & the core idea:** a route is a sequence of jumps — `2^{N-2}` of them. But two routes that both end on stone `i` have identical futures: the remaining cost depends only on `i`, so the history collapses to one number. In C the future depends on *which activity was yesterday*, so the collapse is one number per possible last activity. The whole of DP in one sentence: **keep exactly what the future will ask for, throw away the rest.** The student already says this; ask them to say it about C before writing code.
+- **Sharp edges & optional variations:** A's max total is `(N-1)·10^4 ≈ 10^9` — `int` fits but the sentinel arithmetic is the risk, so use `long long` and `1e18`. B's `K ≤ 100`: the honest loop is `O(NK)`. C: three final states, and the transition must read *yesterday's other two* states, not the same one (a self-transition here is the classic bug). **Variations, and one trap:** (i) charging `|h_i − h_j| + c` per jump changes the **answer** (fewer jumps preferred) but not the **state** — useful to show that a changed answer does not imply a changed state; (ii) allowing *one backward jump* changes the legal path set yet **not** the optimum (delete the excursion; triangle inequality), so it is a **bad** test of whether the student really added a used-flag — do not use it to check the state.
+- **Transfers to:** house robber, decode ways, minimum jumps, stock trading with cooldown, and the reflex question *"does the future need the whole route, or only the endpoint?"*
+- **Private source notes:** DPC A's card writes the two-stone jump as `dp[i+2] = min_{0 ≤ i+j < N}(...)`, a spurious `min` over a bound with no `j` inside; the intended line is `dp[i+2] = min(dp[i+2], dp[i] + |A[i] − A[i+2]|)`. DPC B repeats the same artifact.
 
-### N6 · Last-choice identity: name it, then compress it to a rank  `CORE · BUILD`
+### 2. Overlapping work on grids and DAGs (the order *is* the algorithm)
 
-- **Anchors:** L25–63 (the transition is "which coin was last"), L136–156 (the last choice is the canonical decomposition), L271–277 (rank = equivalence class of identities).
-- **Primary cards:** DPC-C Vacation, DPC-T Permutation. **Practice-only:** NDPC-I (EDGE, insertion DP), TDPC-O (STRETCH, same shape with equal-letter gaps).
-- **Motivating Fracture:** `dp[i][last]` only needs the *identity* of the last choice, not the history — but when identities are a permutation of `1..N`, storing the value makes every transition invalidate every stored value. Storing the *rank* makes the update local (±1) and turns the transition into a prefix/suffix sum.
-- **Core Invariant:** (a) the future asks only "what was the last choice" (Vacation); (b) when choices come from a fixed ordered set, the future asks only for the rank of the last element among the first `i`, because all comparisons are relative. Appending an element of rank `j` shifts every old rank `≥ j` up by one, but the number of old elements below `j` is exactly `j−1`, so reads need no shift.
-- **Contest Signature:** `dp[i][label]` with a small label set → keep the label. "Permutation of 1..N", "relative order only", a pattern of `<`/`>`, `N ≤ 3000` → rank.
-- **Boundary & Sentinel Contract:** Vacation has three states with `dp[0][*] = 0`; Permutation has `dp[1][1] = 1`; `<` reads a prefix sum over `k < j`, `>` a suffix over `k ≥ j`; both loops must read the **previous** row; `dp[i][j]` with `j > i` is meaningless and must stay 0.
-- **First contact:** none from C3 — build.
-- **Exit gate (fresh, asymmetric):** sign string `"<><"` on 4 elements (Euler count 5). Predict the rank table row by row (i = 1..4) and the final sum, then verify against a 4! brute force. The asymmetry is that the string starts with `<`.
-- **Practice 6b — `Twist`:** write the `O(N³)` rank DP first, then the prefix/suffix compression; both must agree on `"<><"` and on `"><>"` (also 5).
+- **Problems:** [Grid 1 — DPC H](https://atcoder.jp/contests/dp/tasks/dp_h) [CORE, ~1200] · [Longest Path — DPC G](https://atcoder.jp/contests/dp/tasks/dp_g) [CORE, ~1500] · [DAG — NDPC B](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_b) [CORE, ~1200] · [Coin — NDPC H](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_h) [EDGE, ~2000].
+- **Frontier note:** Order is **verified** (two fills produced, stale read diagnosed), so compress the concept to one minute — *for this cell, which neighbours must already be final?* — and spend the chapter on **implementation** and on NDPC H's new idea. H: mod `1e9+7`, `1000 × 1000`. G: `N = 10^5`, so iterative topological order (or a memo DFS you trust); this is the chapter's real code lesson. NDPC B: Kahn's algorithm and `T ≤ 10^5` with `ΣN ≤ 2·10^5` — a full `memset` per test is `O(T·N)` and will TLE; clear only what you touched. NDPC H is the only genuinely new idea (per cell, the set of attainable coin counts is a **full interval**) — **full depth**, and it must be discovered by tracing `2×2` then `3×3` grids, not stated. 1–2 sessions. **Exit test:** NDPC H's interval claim derived by the student with a reason the gaps cannot occur; NDPC B ACs with per-test clearing.
+- **Why the naive way breaks & the core idea:** paths are exponentially many, but the number of ways to reach a cell depends only on its top and left neighbours, and in a DAG a vertex's answer depends only on its predecessors. The order is a **promise**: when you arrive at a state, everything it reads is already final. Break the promise (cycles, or row-major over diagonal dependencies) and you read zeros and get a *plausible* wrong number. Make that visceral now — it returns in Ch. 6, 9 and 13.
+- **Sharp edges & optional variations:** G's `if (dp[x]) return dp[x]` uses `0` as "uncomputed"; legal here **only** because a node with `dp = 0` has no outgoing edges (any out-edge forces `dp ≥ 1`), so re-exploring is `O(1)`. Make the student prove that before copying it — the same idiom is a bug in general DPs. NDPC B: `T` up to `1e5`, sum of `N` bounded; adjacency clearing matters. NDPC H: `N ≤ 4000`, so two `int` tables are 128 MB — use `uint16_t` (counts are `≤ 2N−2`) with rolling rows plus a global difference array over `x`, giving `O(N²)` time and `O(N)` memory. **Variations:** a left move in DPC H destroys acyclicity and the count becomes ill-defined (qualitative change, good demonstration that acyclicity is load-bearing); giving NDPC H's coins arbitrary weights breaks the min/max-interval **representation** (attainable counts `{0,2,4}` instead of `0..4`) while the question remains well-posed — this isolates that the interval claim is about *unit* coins, not about grids.
+- **Transfers to:** topological DP, DAG path counting, reachability with obstacles, and every later chapter whose only real work is choosing an order in which reads are final (interval length, subset popcount, tree postorder).
+- **Private source notes:** NDPC B has no editorial — plain topological DP, needs none. NDPC H's editorial gives `O(N²)` memory for two tables; the rolling-row + difference-array version is strictly better and should be the default. The intermediate-value claim was brute-force verified on random grids.
 
----
+### 3. Carrying a budget: knapsack and its rotations
 
-### N7 · Aggregate over a window instead of rescanning  `CORE · BUILD (prefix sums, then prefix-max over values)`
+- **Problems:** [Knapsack 1 — DPC D](https://atcoder.jp/contests/dp/tasks/dp_d) [CORE, ~1300] · [Knapsack 2 — DPC E](https://atcoder.jp/contests/dp/tasks/dp_e) [CORE, ~1500] · [Contest — TDPC A](https://atcoder.jp/contests/tdpc/tasks/tdpc_contest) [CORE, ~1100].
+- **Frontier note:** The rotation *idea* and the `<= W` read-out test are **verified** (they demanded it unprompted), so do not teach them again. Spend the board time on (a) **exactly-j vs at-most-j** — two consistent tables, same answer, and the student must write both for D and say which single line differs; (b) making the rotated table actually **run** (INF = `4e18`, descending scan, capacity test in the scan); (c) TDPC A as the first `bitset` and the first *read-the-question-twice* trap: it counts **distinct scores**, not subsets. ~1 session. **Exit test:** D ACs under both conventions; E ACs with the capacity test inside the scan; TDPC A's answer counts `0` (sample 1 → 7).
+- **Why the naive way breaks & the core idea:** `2^N` subsets. After deciding items `1..i`, the future only cares how much capacity is spent — not which items spent it — so the state is `(i, j)`, the index a layer, the weight the state. When weight is huge but total value is small, swap the coordinates: store **least weight for each exact value**. Nothing about the problem changed; only which axis is bounded. The tell is always in the constraint line.
+- **Sharp edges & optional variations:** D: with the 1D in-place array, iterate `j` **descending** (0/1 item); with a 2D table any order works — the two shapes are not interchangeable, and the student should produce both and diff. Answer is `max_j dp[N][j]`, not `dp[N][W]` (under at-most semantics they coincide; under exactly semantics they do not). E: `Σv ≤ 10^5` ⇒ the value-indexed array is `1e5+1`; INF must survive `INF + w` (use `4e18`, not `LLONG_MAX`). TDPC A: `bitset<10001>`, `can |= can << p`, answer `can.count()` — and it counts `0` as a score. **Variations that genuinely change answers:** at most one item per colour (extra loop over groups); exactly `k` items (extra dimension); a two-sided capacity (lower *and* upper bound) — all three change which subsets are feasible, not just the code.
+- **Transfers to:** subset-sum via bitsets, multi-resource budgets, `exactly` vs `at most` conventions, and coordinate rotation whenever one axis is bounded and the other is not.
+- **Private source notes:** D's editorial says "because `v_i ≤ 10^9`, it is not feasible to store `v_i`" — garbled; the point is that `W ≤ 10^5` is the bounded coordinate. E's "instead of a high value of `v_i`, there is a high value of `w_i`" is likewise garbled (`W ≤ 10^9`, `v_i ≤ 10^3`). TDPC A's transitions are correct as printed; the subtlety is that reachable sums are `O(Σp)` not `O(N·M)`, and a bitset is the intended speed-up.
 
-- **Anchors:** L311–317 (precalculate, add a prefix axis), L339–343 (LIS "accelerated by a structure", never derived), L319–329 (index by something other than the input order).
-- **Primary cards:** DPC-M Candies, TDPC-F Semi Express, TDPC-L Cat, DPC-Q Flowers, TDPC-K Target. **Practice-only:** DPC-B (window with a non-separable weight), DPC-T (already N6).
-- **Motivating Fracture:** the transition is a max/sum over a contiguous range of earlier states; the inner loop costs `O(NK a_i)` or `O(N²)`. The range need not be re-walked — but the prefix must be built from the *previous* row, and sometimes the queried set is over *values* (`h_j < h_i`), which no running scalar can express.
-- **Core Invariant:** (a) if the queried set is a prefix/suffix/fixed-width window over the **index**, a running prefix aggregate answers in `O(1)` amortised; (b) if it is over a **value**, the aggregate is indexed by value and needs a Fenwick/segment tree (or a monotone pointer when query order is monotone in the value).
-- **Contest Signature:** `a_i ≤ K ≤ 1e5` with `Σ_{j'=j−a_i}^{j}`; "stops must be at least K apart"; "`h_i` distinct and `h_i ≤ N`"; "longest chain of nested circles/dolls"; `N ≤ 1e5` with a transition that reads as `O(N)`.
-- **Boundary & Sentinel Contract:** `pre[−1] = 0`; the window is `a_i+1` values; the subtraction can go negative → `(x%MOD+MOD)%MOD`; build the prefix from the previous row; TDPC-L has negative `f`, so a running max must start at `−INF`, not 0; DPC-Q strictness (`max over h < h_i` vs `≤`) is invisible while heights are distinct — the drill must use duplicates.
-- **First contact (C3, two items):**
-  - *negative modulo:* board `MOD = 1e9+7, pre[j] = 3, pre[j−a−1] = 5`. What does C++ print for `(3−5) % MOD`? (−2). What must the code say? `1000000005`.
-  - *prefix-max over values:* `h = {3,3,1,2}`. Strict answer 3, non-strict 6. Which query does your Fenwick issue?
-- **Exit gate (fresh):** (1) Candies `N=3, K=5, a={2,1,3}` → 3 ways; report the window bounds for the middle child and what `pre[−1]` must be. (2) Flowers on `h={2,5,2,4}, a={3,1,4,1}` → strict answer 5 (`h=2` third flower, then `h=4`), non-strict 8. Pass = both numbers plus which query produced each.
-- **Practice 7b — `Anchor`:** Candies with `a_i=0`, `a_i=K`, `K=0`; Semi Express and which row is the window; Frog 2 and why a prefix sum does **not** apply (`|h_i−h_j|` is not separable) and why `O(NK) = 1e7` is the intended cost.
+### 4. Two sequences at once: alignment and automata
 
----
+- **Problems:** [LCS — DPC F](https://atcoder.jp/contests/dp/tasks/dp_f) [CORE, ~1700] · [String — NDPC C](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_c) [CORE, ~1700].
+- **Frontier note:** Table-fill order is **verified** — one minute, no derivation. Full depth on the two genuinely new things: **reconstruction** (the first time the answer is not one cell but a path through the table) and **NDPC C's automaton** (the "position" becomes how much of each forbidden pattern has been matched as a subsequence — an invention, so run it as discovery). ~1 session. **Exit test:** F ACs *and* its printed string passes an independent checker (length equals the DP value, and it is a subsequence of both) — eyeballing sample strings is not a test; NDPC C's state is proposed by the student before confirmation.
+- **Why the naive way breaks & the core idea:** common subsequences are exponentially many, but the decision at the *ends* of the two prefixes is local: drop a character from one side, or match both. So the state is the pair of prefix lengths. In NDPC C we are not matching a second string; we are tracking how much of each forbidden pattern is already matched. Same state philosophy, different "position". Note the English word **subsequence** is doing real work here — see the variation below.
+- **Sharp edges & optional variations:** F: 1-indexed `dp`, `dp[0][*] = dp[*][0] = 0`; during reconstruction, prefer the match branch when `s[i-1] == t[j-1]` **and** `dp[i][j] == dp[i-1][j-1] + 1` — the card's "move to the larger neighbour" is not a correct rule in ties. `3000 × 3000 int` = 36 MB. NDPC C: `|S_i| ≤ 10` ⇒ at most `11^3` states; on appending a letter, advance each matched-prefix length to its new value (a `while` is fine at this size); sum over all states after `N` steps; mod `998244353`. **Variations:** longest common **substring** (state gains "ends here", answer is a max over all cells, not the corner) — genuinely different table; avoiding `S` as a **substring** (KMP failure links) versus as a **subsequence** (next-occurrence automaton, the NDPC C state) — same English word, different state, different count. Both are non-vacuous.
+- **Transfers to:** edit distance, shortest common supersequence, wildcard matching, every two-index alignment table, and the automaton view that returns in Ch. 12.
+- **Private source notes:** DPC F's samples admit several correct LCS strings; the stored solution prints `ayb` for sample 1 where the card shows `axb` — not a bug. Replace the reconstruction paragraph rather than patching it.
 
-### N8 · The last operation splits: interval DP  `CORE · FLOOR (length order audited; new content = split legality, cost, sentinel)`
+### 5. Killing an inner loop: prefix sums, windows, ranks
 
-- **Anchors:** L643–664 (substrings, split at M), L825–850 (Breaking Strings, Knuth).
-- **Primary card:** DPC-N Slimes. **Practice-only:** TDPC-B (interval game, primary at N9), TDPC-I (EDGE: erasability).
-- **Motivating Fracture:** the recurrence is right but the *split set* is wrong: allowing `M = L` or `M = R` reads a 0 and an unfilled `INF`. If the merge cost can be negative, `INF + cost > INF` stops holding and the unfilled state becomes a real candidate (F10's hidden dependence).
-- **Core Invariant:** the last operation partitions a segment into two strictly shorter independent segments; the split set is exactly the interior split points, both halves must already exist, and the fill order is non-decreasing length. *(Length order audited.)*
-- **Contest Signature:** `N ≤ 3000` with `O(N³)`; "merge/burst/remove/fold a segment"; cost = sum of the segment (prefix sums).
-- **Boundary & Sentinel Contract:** split endpoints (`L ≤ M < R` half-open vs `L < M < R` closed); base length 0 vs length 1 (`dp[i][i] = 0`); answer `dp[0][N−1]`; merge cost via prefix sums; with negative costs the sentinel needs `long long` and an explicit `filled[][]` flag; `N = 1`.
-- **First contact:** none from C3 — the ordering floor is audited, the split-set drill is this node's own.
-- **Exit gate (fresh, negative costs so the sentinel is load-bearing):** `v = {5, −2, 3, 1}`, cost of a segment = its sum. (1) Enumerate the legal splits of `[1,4]`. (2) Compute the answer by hand = **10** (1-indexed: merge `3` with `1` first, then `−2`, so `cost(2..4) = 3`; then `sum(1..4) + 0 + 3 = 7+3`). (3) Say what breaks if the split set includes `M = L` given `dp[1][4]` starts at `INF`. Pass = the number and the sentinel sentence.
-- **Practice 8b — `Boundary`:** Slimes with `N=1`, `N=2`; fill with `L` outer / `R` inner to watch `dp[M][R]` fail; then the negative-cost instance with an explicit `filled` flag. Knuth's quadrangle inequality (F10) is a **stretch note only** — state the precondition, do not teach the optimiser.
+- **Problems:** [Candies — DPC M](https://atcoder.jp/contests/dp/tasks/dp_m) [CORE, ~1700] · [Permutation — DPC T](https://atcoder.jp/contests/dp/tasks/dp_t) [CORE, ~2000] · [Semi Express — TDPC F](https://atcoder.jp/contests/tdpc/tasks/tdpc_semiexp) [CORE, ~1900] · [Cat — TDPC L](https://atcoder.jp/contests/tdpc/tasks/tdpc_cat) [EDGE, ~2200].
+- **Frontier note:** The *concept* of expiry is **verified** ("domination vs natural death"), so skip the deque lecture and spend all board time on turning it into code **inside a DP row**. That leaves DPC T as the chapter's real problem (rank state, sign-dependent prefix/suffix, index shift) and TDPC F as the first genuine deque under a 1e6 input. This is the first **optimisation** chapter: the question is always *what changes between consecutive states?* ~2 sessions. **Exit test:** M and T both AC; T still ACs after swapping one `<` for `≤` (the sign swap is the real test of whether the rank picture is understood); the student can name, for TDPC F, which cell the deque drops and why.
+- **Why the naive way breaks & the core idea:** the transition sums or maxes over a contiguous block of previous states, the block shifts by one element per state, so storing the block's **summary** costs `O(1)` per state. Prefix sums for sums; a monotone deque for maxima; a running prefix max for monotone bounds. The tell in the statement is a small bound in the state (`a_i ≤ K`) or a sum over `j` in a range buried inside a max.
+- **Sharp edges & optional variations:** M: `pre[j] - pre[j-a_i-1]` needs the lower index clamped at 0; mod subtraction goes negative without `+MOD`; `dp[0][0] = 1`, answer `dp[N][K]`; `O(NK) = 10^7`, but the naive `O(N K a_i)` is `10^{10}`. T: the state is the **rank** of the last element, not its value; `<` reads a prefix sum, `>` a suffix sum, and the rank **shifts by one** when the new element is inserted — that shift is where most wrong answers live. TDPC F: the transition inserts the sum at the front and drops the tail, so the window is `K+1` long and the DP's `j` is a **run length**, not a position; `N ≤ 10^6` forbids recursion. TDPC L: state `j` = smallest index within distance 1 of the last placed cat; adding cat `i+1` creates pairs with every cat from `j` to `i`, hence a suffix sum and a factor `2`; prefix maxima over `k ≤ j` suffice. **Variations:** candies with both a lower and an upper bound per child (some `K` become unreachable — a different answer, not just a different loop); `≤` instead of `<` in T (changes the count); a window whose length depends on the state (needs a predicate-driven deque).
+- **Transfers to:** LIS with a BIT (Ch. 11), prefix-sum optimisation of any range-sum transition, monotone-deque windows, and later divide-and-conquer or CHT optimisation — all the same "summarise the window" move.
+- **Private source notes:** M's `pre[j-a_i-1]` is written without the clamp. T's editorial is correct but its indexing lags the prose by one (`dp[i][j]` after `i` signs describes permutations of `1..i+1`). TDPC F's "insert the sum at the front and delete the last element" hides *which* element is dropped (the one that would exceed `K` consecutive stations); write the window explicitly.
 
----
+### 6. Intervals: the last split is the decision
 
-### N9 · Games: the state is a difference, not two totals  `CORE · BUILD`
+- **Problems:** [Slimes — DPC N](https://atcoder.jp/contests/dp/tasks/dp_n) [CORE, ~1900] · [Deque — DPC L](https://atcoder.jp/contests/dp/tasks/dp_l) [CORE, ~1800] · [Game — TDPC B](https://atcoder.jp/contests/tdpc/tasks/tdpc_game) [CORE, ~1800] · [Iwi — TDPC I](https://atcoder.jp/contests/tdpc/tasks/tdpc_iwi) [EDGE, ~2200].
+- **Frontier note:** Length order is **verified** (they produced it and explained why), so one minute. Full depth on the **split transition** (N), the **difference state** (L, B), and TDPC I's erasability test, which is the chapter's discovery. Do N and TDPC B back to back: same `(L,R)` shape, one minimises over splits, the other maximises over ends — the contrast is the lesson. ~2 sessions. **Exit test:** N ACs; the student answers "why branch on the **last** operation rather than the first?"; TDPC I's criterion is derived, with a counterexample found for the naive criterion.
+- **Why the naive way breaks & the core idea:** any interval's last operation splits it into two independent intervals; enumerating bracketings is Catalan, but `(L,R)` absorbs all of them because the halves never interact again. State = interval, transition = split point, order = increasing length.
+- **Sharp edges & optional variations:** base cases: length 1 free; length 2 sometimes needs its own line (N's stored solution sets it explicitly). L: the state is the **difference** (current player minus opponent), the transition flips sign, answer `dp[0][N-1]`; "total minus opponent" is a second formulation with a different base — pick one and stay consistent. TDPC B: same difference idea over two piles, answer `(DP[A][B] + total)/2`; the card's base transitions have the wrong second index. TDPC I: use half-open intervals; an interval is fully erasable iff `len % 3 == 0` and `dp[L][R] == len/3`; the split rule must be present or `iiwiiwiwi` is missed. **Variations:** merge cost `max` instead of `sum` changes the answer *and* kills the Knuth-style monotonicity (a check on knowing which property was load-bearing); restricting the split to a subset of positions changes the optimum; odd/even-length game variants change who moves last.
+- **Transfers to:** matrix-chain multiplication, polygon triangulation, burst balloons, optimal BST, and two-player games on a line where the state is who owns which interval.
+- **Private source notes:** N's editorial mentions Knuth optimisation but the stored code is `O(N³)` — fine at `N = 400`; do not let the mention derail the chapter. TDPC B's transitions as written use `j` where the untouched coordinate must be `0`. TDPC I's "fully erasable" criterion is the whole punchline; hold it back.
 
-- **Anchors:** L126–135 (optimal substructure, the TSP counterexample as a warning), L643–664 (the interval recursion reused as a game).
-- **Primary cards:** DPC-K Stones, DPC-L Deque, TDPC-B Game.
-- **Motivating Fracture:** "both players play optimally" cannot be written with one score; storing two totals doubles the state and still doesn't alternate. Storing `current − other` makes the alternation a single sign flip.
-- **Core Invariant:** zero-sum with a conserved total → the value to the mover is `max over moves (gain − value(child))`; the total is recovered at the end (`X = (sum + D)/2`). For win/lose games the value is boolean: `exists a move to a losing state`.
-- **Contest Signature:** two players, alternating, perfect information, "maximise your total"; interval game with `N ≤ 3000`; subtraction game asking "does the first player win".
-- **Boundary & Sentinel Contract:** `dp[0] = lose` (no move = lose); `dp[i][i] = a_i`; `X−Y` has the same parity as the total; `N=1`; Stones is a plain subtraction set (no disjunctive sum, so no Grundy).
-- **First contact:** none from C3 — build.
-- **Exit gate (fresh):** (1) Stones with moves `{1,3}`, `N=7` → first player wins (7→6 is losing); give the full win/lose vector for 0..7 and the winning move. (2) Deque on `[4,1,9,2]` → `D = 10`, so `X = 13, Y = 3`. Pass = both numbers plus the "total is recoverable" sentence.
-- **Practice 9b — `Twist`:** Stones as win/lose only; then Deque with the difference state and the reported first-player score; then the same interval with the take order inverted to check the symmetry.
+### 7. Adversaries and dice: games, probability, expectation  ← **the confirmed break**
 
----
+- **Problems:** [Stones — DPC K](https://atcoder.jp/contests/dp/tasks/dp_k) [CORE, ~1500] · [Coins — DPC I](https://atcoder.jp/contests/dp/tasks/dp_i) [CORE, ~1600] · [Tournament — TDPC C](https://atcoder.jp/contests/tdpc/tasks/tdpc_tournament) [CORE, ~1900] · [Dice — TDPC D](https://atcoder.jp/contests/tdpc/tasks/tdpc_dice) [CORE, ~1900] · [Sushi — DPC J](https://atcoder.jp/contests/dp/tasks/dp_j) [EDGE, ~2100].
+- **Frontier note:** This chapter holds the one verified break and the article has nothing on it, so it is **built rung by rung, and it may take as long as it takes.** Nothing else needs it except TDPC J (Ch. 8), so there is no downstream pressure. The ladder:
+  - **Rung 0 — DPC K, ~10 minutes.** Verified: correct `L/W` table and the right `n = 7` verdict. Code it for the reps and for the "OR over moves" shape, not for the idea.
+  - **Rung 1 — probability as weighted counting (DPC I).** No expectation. Set up `dp[i][j]` = probability of exactly `j` heads among the first `i`, then run the card's "at least `j`" convention as a **second** implementation and diff the tables — the same two-conventions exercise as Ch. 3, applied to probabilities.
+  - **Rung 2 — the algebra of expectation, discovered, never declared.** The break lives here, so this rung advances one question at a time and **never** opens with the formula. On a one-unknown process ask only: *"does a throw cost anything, and if the throw fails, where are you standing?"* Let the student say it in words, then write the equation themselves; only if they stall do you put a skeleton on the board with blanks — `E[?] = ___ + Σ ( ___ · E[?] )` — and fill it together. Start with one unknown and one self-loop (`E = 1 + (5/6)E` for the expected rolls to see a 6 → 6), then two unknowns, then three. Re-run the session's 3-node chain as the *teaching* example — it is already on the board and already failed, so it is the cleanest starting point — and use a **fresh** process as the test. Rule carried over from the probing: a "don't know" here means **shrink the step** (drop back to a single coin flip, or to Rung 1's weighted counting), never repeat the same stem louder.
+  - **Rung 3 — TDPC D, then TDPC C.** D is expectation where the state is an exponent triple and the outcome "roll a 1" is a self-loop with probability `1/6`: cancellation is unavoidable, in a clean setting. C is probability only (no expectation) over rounds — a change of pace that tests whether Rung 1 transferred.
+  - **Rung 4 — DPC J.** The full 3D self-loop system; the cancellation plus ordering by `x+y+z`.
+  - **Exit test (the gate for Ch. 8's TDPC J, not for the rest of Ch. 8):** given a *new* process in words ("roll two dice until the sum exceeds 8"), the student writes the state set and one equation per state unprompted, and solves a 2-unknown system unaided. If that fails, stay here.
+- **Why the naive way breaks & the core idea:** game trees are exponential, but a position's value depends only on what remains and "winning" is an OR over moves into losing positions — the opposite of an optimisation DP, where one bad move does not matter. Probability DP is counting with weights: the future depends on how many heads so far, not which coins they were. Expectation is the same recursion plus "one step costs 1", and here is the new operation: **a transition that returns to its own state makes the recurrence an equation, not a formula** — gather the terms and divide, rather than recurse. Bridge to their own vocabulary: the drop-back after a tail is a *natural death* of progress; the state after death is exactly what the equation must name.
+- **Sharp edges & optional variations:** K: `dp[0]` losing; `O(NK)` with `N ≤ 100`, `K ≤ 10^5`. I: `N ≤ 2999`; exactly-j versus at-least-j; answer `Σ_{j>N/2} dp[N][j]` (or `dp[N][⌊N/2⌋+1]` in the at-least convention); `double` is enough for `1e-9` absolute, print with `setprecision(15)`. TDPC C: block formula `⌊(j-1)/2^i⌋` (1-indexed); probability `1/(1+10^{(R_k−R_j)/400})` is `j` beating `k`; `dp[0][j] = 1` means "in round 0", not "wins"; `K ≤ 10` ⇒ `≤ 1024` players. TDPC D: `D` must factor over `{2,3,5}` or the answer is 0; exponent caps `(59,37,25)`; outcome `5` adds one factor of 5 (the card omits `+1`); ~62k states × `N = 100`. J: denominator is `x+y+z` (non-empty plates), **not** `n`; the card's "multiply by `n` and use `x+y+z = n`" is false because empty plates exist; the correct step cancels the `(n−x−y−z)E` self-loop; iterate by increasing `x+y+z` (memo recursion is also fine — depth `≤ 900`; the stored solution's `dp > 0` memo test is legal only because every reachable state has `E > 0`, so make the student prove that before copying). **Variations:** misère play (base flips, table changes globally); a process with a draw (needs retrograde analysis on a graph — the linear scan is no longer valid); expected *attempts per success* versus *total attempts*; a die face with zero probability (removes a transition, changes the answer).
+- **Transfers to:** impartial games and Grundy values, minimax with a difference state, absorbing Markov chains, and the general habit of asking **"can I come back to this state?"** before writing a recurrence.
+- **Private source notes:** J's final formula is right, its stated derivation is wrong — teach the cancellation, not the quoted sentence. TDPC D's outcome table should read `5 → (j, k, min(l+1, p5))`. TDPC C's `dp[0][j] = 1` labels round 0; say it out loud or the base looks arbitrary.
 
-### N10 · Expectation: the certain step, the branches, and the self-loop you must subtract  `CORE · FROM-ZERO`
+### 8. Subsets as states
 
-- **Anchors:** L126–135 and L136–156 (the closest thing in the article — sums of *counts*), L118–125 + F6 (the memoisation claim). Expectation itself is **absent from all 970 lines** (F12).
-- **Primary cards:** DPC-I Coins, DPC-J Sushi, TDPC-C Tournament, TDPC-D Dice. **Practice-only (parked rung 5):** TDPC-J Ball — EDGE, only after N11.
-- **Motivating Fracture:** `E = 1 + Σ p_i E(next_i)` contains `E(current)` whenever a move can do nothing. That is an equation, not a recurrence: memoised recursion recurses forever (F6), and the certainly-paid `1` is routinely folded into the branch list or multiplied by a probability.
-- **Core Invariant — four sentences, taught in this order:**
-  - **E1. The certain step sits outside the branches.** `E(s) = 1 + Σ_i p_i · E(next_i)`, with `Σ p_i = 1` **including** the no-op branch. Dropping the no-op branch is the same error as dropping a transition.
-  - **E2. If the same state appears on the right with coefficient `q < 1`, move it left and divide by `1−q`.** `q` is `P(no progress)`, so `1−q = P(progress)`.
-  - **E3. One state gets exactly one variable.** Two variables for one state is not extra rigour; it is an under-determined system.
-  - **E4. After E2 removes self-terms the remaining dependencies are acyclic in every card here,** so back-substitute in that order. No Gaussian elimination is needed — but the equations must be written before any code.
-  - **Paired with F6:** naive memoisation on a self-loop diverges; the fix is algebra *at the state*, not memoisation.
-- **The ladder (all five rungs, in order; the audit's `3/2` and any geometric-series view are not evidence — the student derives each):**
-  1. One state, stop certain → `E = 1`.
-  2. One state, `1/3` stay → `E = 1 + (1/3)E = 3/2`.
-  3. Two states: `A (1/2→A, 1/2→B)`, `B (1/2→A, 1/2→stop)` → `E_A = 6`, `E_B = 4`, both equations written and the substitution shown.
-  4. Three states with per-state denominators → Sushi. Write the general `(x,y,z)` equation with denominator `n` (dishes) and self-coefficient `(n−x−y−z)/n`; then `N=1` with `a_1 ∈ {1,2,3}` → 1, 2, 3; then `N=2` with `a={1,1}` → 3 (the intermediate state `(1,0,0)` carries a genuine self-loop: `E = 1 + (1/2)E → 2`).
-  5. Parked as stretch: bitmask expectation (TDPC-J Ball) — only after N11, and only opt-in.
-- **Exit gate (fresh; both equations written; no clicking):** `A: 1/2→A, 1/2→B`; `B: 1/3→A, 1/3→B, 1/3→stop`. Must yield `E_A = 7`, `E_B = 5`, with the substitution check `E_A = 1 + 0.5·7 + 0.5·5 = 7`. Also state `P(progress)` for each state. Fail modes to watch: a third variable, a missing `1`, or treating `E_A` on the right as an assignment instead of an unknown.
-- **Boundary & Sentinel Contract:** tolerance `1e−9` as stated by the problem; probability 0 ≠ impossible; DPC-I's convention `dp[0][0] = 1` with the answer summed over `heads > tails`; TDPC-D caps exponents at the required prime powers (`min(j+2,p2)`) — a state-merge (F16) that keeps the domain finite; Sushi's `(x,y,z)` is itself a merge of the `3^N` configurations by count; print with 10+ decimals.
-- **First contact:** rungs 1→2→3 of the ladder. Nothing in this node may be cited as "already known".
-- **Practice 10b — `Anchor`:** rungs 1–3 on *different* numbers (e.g. `1/4` stay → `4/3`; a 3-state chain with a self-loop in the middle).
-- **Practice 10c — `Boundary`:** Sushi `N=1` (1,2,3) and `N=2, a={1,1}` (3); Ball with one object (`E=3`, `q=2/3`); Dice with `N=1, D=6`; then write the memoised version without the algebraic move and watch it hang.
+- **Problems:** [Matching — DPC O](https://atcoder.jp/contests/dp/tasks/dp_o) [CORE, ~2000] · [Grouping — DPC U](https://atcoder.jp/contests/dp/tasks/dp_u) [CORE, ~2000] · [Ball — TDPC J](https://atcoder.jp/contests/tdpc/tasks/tdpc_ball) [EDGE, ~2200].
+- **Frontier note:** Execution is **verified** (layered trace, answer 8, optimal assignment recovered) but **invention is not** — so do **not** demonstrate a mask DP. Open with DPC O and let the student design the state. Scaffold ladder if stuck, none of it naming masks: (1) after some women are matched, what does the future need to know? (2) if you forget the matching order, can you still tell which man is next? (3) how many subsets is that, and is `2^21` affordable? Only after ~10 minutes with no state, give the state **in words** (the set of matched women) and ask for the transition — that spoils half the invention, not all of it. DPC U is the first `3^N` enumeration: full depth on the low-bit anchor (without it every partition is counted `k!` times) and on the subset-cost precompute. TDPC J mixes masks with Ch. 7's algebra. ~2 sessions. **Exit test:** O's state invented (not confirmed); U's anchor justified by counting how many times a partition would otherwise appear; TDPC J's self-loop handled with the *same* move as sushi.
+- **Why the naive way breaks & the core idea:** `N!` matchings. After matching a set `S` of women the future depends only on `S`, because the men are consumed in a fixed order determined by `|S|` — state equivalence in its purest form: many histories, one state. U adds a layer: first score every subset as one group, then partition by repeatedly peeling off the group containing the **lowest set bit**.
+- **Sharp edges & optional variations:** O: `N ≤ 21` ⇒ `2^21` ints = 8 MB; `dp[0] = 1`; forward relaxation over unused women; `popcount(S)` can reach `N` only at the full mask, where the loop body writes nothing (guard or accept); mod `1e9+7`. U: `N ≤ 16`; subset scores reach `1.6·10^{10}` ⇒ `long long`; the answer can be **negative**, so `-INF`, never `0`. TDPC J: `N ≤ 16`; process masks increasing; `q` = number of remaining objects within distance 1 of the chosen aim; `min` over aims with `q > 0`. **Variations:** count matchings by size (extra dimension, answer becomes a vector); unordered groups (dividing by `k!` is a trap — anchor instead, and check it on 3 elements); "each element used at most twice" (the state is no longer a set — a qualitative change).
+- **Transfers to:** assignment counting, TSP-style subset DP, set partition, and the `popcount`-as-clock trick; the article's TSP "equivalent states" passage lands here, after the invention.
+- **Private source notes:** O's editorial writes `|S|`-th male while the code uses `popcount(s)` — consistent, but the prose invites an off-by-one. TDPC M is **not** in this chapter any more (see Ch. 10): its per-floor subset DP belongs here, but its layer step needs matrix power.
 
----
+### 9. Trees: the answer depends on one boundary
 
-### N11 · The used-set resource: masks and canonical partitions  `CORE · FRAGILE + BUILD (3^N budget)`
+- **Problems:** [Independent Set — DPC P](https://atcoder.jp/contests/dp/tasks/dp_p) [CORE, ~1600] · [Subtree — DPC V](https://atcoder.jp/contests/dp/tasks/dp_v) [EDGE, ~2200].
+- **Frontier note:** Untested. Full depth, and the hard part is **implementation**, not idea: `N = 10^5` means iterative postorder with an explicit order array (a recursive DFS with 1e5 frames is a coin flip on the judge). P first: one question — *what does the parent need to know about this subtree?* — then two colours and a product. V second: the same merge run from every root, with one factor removed. ~2 sessions. **Exit test:** P ACs iteratively; the student produces the "why division is illegal" reason for V (`M` composite) unprompted, and can say what would change if `M` were prime.
+- **Why the naive way breaks & the core idea:** rooting at every vertex looks like `N` full DPs. But a subtree's answer depends only on `(subtree, colour of its root)`, so the parent needs one number per colour. Rerooting notices that "the whole tree seen from `u`'s side of edge `v–u`" is the same merge with one factor deleted — and that factor is available from prefix/suffix products.
+- **Sharp edges & optional variations:** P: `dp[v][0] = Π dp[c][1]`, `dp[v][1] = Π (dp[c][0] + dp[c][1])`, base `1`, answer `dp[0][0] + dp[0][1]`. V: `M` is **not prime** ⇒ never divide; `f[v][0] = 1`, `f[v][1] = Π(f[c][0] + f[c][1])`; the answer at `v` multiplies every neighbour side. Keep the two state meanings explicitly separate: independent (no two adjacent black) versus **connected** black set — same tree, different merge, different answer. **Variations:** exactly `K` black vertices (tree knapsack, `O(NK²)`, different answer); a forbidden pattern along root-to-leaf paths (state = last two colours); diameter (same reroot template, different merge).
+- **Transfers to:** every boundary-state tree DP, rerooting, tree knapsack, and the "reuse sibling products" pattern far beyond trees.
+- **Private source notes:** V's editorial's crucial sentence is "the reroot step uses prefix and suffix products instead of division"; the rest is routine. V's stored solution is iterative — imitate it.
 
-- **Anchors:** L609–641 (subsets, TSP, `4^N → 3^N`), L437–457 (GameWithGraphAndTree), L797–823 (InformFriends).
-- **Primary cards:** DPC-O Matching, DPC-U Grouping. **Practice-only:** the count version of DPC-U (the drill). TDPC-M (STRETCH) belongs to N15; NDPC-C (EDGE) is parked.
-- **Motivating Fracture:** DPC-O needs "which columns are taken" and `dp[i]` cannot say it. Once the mask exists, DPC-U's submask loop is fine for max and catastrophic for counts, because each partition is generated once per ordering of its groups.
-- **Core Invariant:** (a) a mask state is legal when every transition only *adds* elements, so increasing popcount/mask is a topological order; (b) for partitions, fixing "the group containing the lowest set bit of `S`" gives each partition exactly one decomposition.
-- **Contest Signature:** `N ≤ 20`; "assign each to exactly one"; "partition into groups"; matching/assignment. The budget is arithmetic, not fashion (F14): `N·2^N ≤ 1e8` → `N ≤ 20`; `3^N ≤ 4e7` → `N ≤ 16`.
-- **Boundary & Sentinel Contract:** `for (t=s; t; t=(t-1)&s)` includes `s`, excludes 0, runs zero times for `s=0`; `1<<N` overflows at `N=31` (use `1LL`); `dp[0]=1` for counting vs `0` for max; iterate `S` increasing so all proper submasks are final; `__builtin_popcount(S)` = number of already-assigned men in DPC-O.
-- **First contact (C3, `k!` for `k>2`, and the re-verification of the FRAGILE floor):** partition `{1..6}` into 3 unlabelled pairs → 15; the uncorrected loop yields 90 = 15·3!.
-- **Exit gate (fresh):** (1) count set partitions of `{1..5}` into exactly 2 blocks (15) with the lowbit rule, and say how many times the uncorrected loop visits each partition (2). (2) A DPC-U-style max on `N=5` with a teacher-supplied asymmetric matrix — the only requirement is that the transition enumerates all submasks of the complement including "everything in one group".
-- **Practice 11b — `Twist`:** Grouping's submask loop *without* the lowbit rule still gives the right max; convert the same code to "count partitions into exactly `k` groups" and watch the `k!` overcount appear. This is where the fragile canonicalisation floor is confirmed or demoted.
+### 10. Layers, vectors, and huge `K`
 
----
+- **Problems:** [Walk — DPC R](https://atcoder.jp/contests/dp/tasks/dp_r) [CORE, ~1800] · [Summer Vacation — NDPC E](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_e) [EDGE, ~2000] · [House — TDPC M](https://atcoder.jp/contests/tdpc/tasks/tdpc_house) [EDGE, ~2200].
+- **Frontier note:** Untested; full depth. R is the first matrix power (`N ≤ 50`, `K ≤ 1e18` ⇒ `50³·60` multiplies) and must include the **sum of all entries** read, which is the part students get wrong. NDPC E is the same "apply a fixed map `2^b` times" idea without matrices — binary lifting on the next non-overlapping event. **TDPC M is moved here from Ch. 8**: its `c(r,s)` per-floor table is Ch. 8's subset DP, but its floor step is an `R × R` matrix power, so it is the capstone that reuses Ch. 8 and needs this chapter. ~2 sessions. **Exit test:** the student can say why `A^K` counts *exactly* `K` and what extra coordinate would answer *at most* `K`; NDPC E ACs with the interval clipped correctly.
+- **Why the naive way breaks & the core idea:** `K = 10^{18}` layers cannot be iterated, but the layer-to-layer rule does not depend on the layer index, so the whole stack of layers is one linear map: `A^K` by squaring. For NDPC E, the state is an event index and the transition is "the first event starting after this one ends"; composing that function `2^b` times answers a query by jumping. Both are "compose a fixed thing many times" — the matrix is just the case where the thing is linear.
+- **Sharp edges & optional variations:** R: entries mod `1e9+7`, `A^0 = I`; the answer is the sum of **all** `N²` entries (all start/end pairs). NDPC E: sort by end, define `nxt[i]`, build `up[18][M]`, jump greedily while the end stays `≤ R`, and clip to events fully inside `[L,R]` (`A_i ≥ L` and `B_i ≤ R`). TDPC M: `H ≤ 1e9`, `R ≤ 16`; `c(r,r) = 1` because the zero-length path counts; the "descend from floor 1 to floor 0" is a formal device to say "stop in room 1", and `dp[0][1]` is the answer. **Variations:** walks of length **at most** `K` (add an accumulator coordinate to the vector — the article only shows this inside its TourCounting example, a skipped step worth naming); walks avoiding a vertex (delete a row and column — changes the count); `K = 0` (empty product = identity, a good edge case).
+- **Transfers to:** linear recurrences, counting walks with forbidden vertices, "apply a fixed function `K` times", and any transition linear in the layer vector.
+- **Private source notes:** the article's matrix-power section assumes the answer is the last layer; the accumulator trick appears only in the example. TDPC M's editorial is the only place in the source set where "the answer is a formal state" appears — budget board time for `dp[0][1]`, since `H ≤ 10^9` is what forces the matrix.
 
-### N12 · Trees: post-order induction and the parent's question  `CORE · FRAGILE + FIRST-CONTACT (tree state derivation)`
+### 11. Can we sort first? Exchange arguments and sweeps
 
-- **Anchors:** L666–740 (subtrees, inner DP, `sum K_i = N−1`), L852–880 (BlockEnemy).
-- **Primary cards:** DPC-P Independent Set, TDPC-P Eel. **Practice-only:** NDPC-F (STRETCH), TDPC-N (STRETCH). `DPC-V` belongs to N13 and is not opened here.
-- **Motivating Fracture:** a subtree answer that doesn't say whether the component touching the parent is black cannot be merged; and a state *handed to you* is not a state you can design — the audit's tree probe supplied `dp[v][0/1]` in the stem, so it tested transition completion, not discovery.
-- **Core Invariant:** given the parent's state the children are independent; merge them one at a time with an inner DP over "children processed so far"; the state exposes exactly the property the parent asks about ("is `v` black"), and every cut transition is present.
-- **Contest Signature:** tree + local constraint; "connected component containing v"; "for every edge cut"; "any two black vertices connected through black".
-- **Boundary & Sentinel Contract:** leaf base (`dp[v][0]=1, dp[v][1]=1` for independent set); the root has no parent edge, so no cut transition is applied there; `INF+INF` in merges (F18); allocate/clear only the `K_i+1` rows you own; `sum K_i = N−1` → `O(N A²)`, while a per-vertex global `memset` → `O(N² A)`.
-- **First contact (C3, merge-cost accounting):** bound both codes aloud on a 6-vertex tree — row-local allocation and per-vertex `memset` — and name which one the article's code does.
-- **State-derivation fallback (C2):** if N1's probe produced a count or a raw set, open N12 with the **bare** independent-set statement, no proposed state, and require the parent's question in words before any `dp[v][…]` is written.
-- **Exit gate (fresh, asymmetric):** tree `1–2, 2–3, 2–4, 4–5, 4–6` with marks `{3,6}`; write the complete transition set (including the cut), the initial pair for a marked and an unmarked vertex, predict `dp[root][0]` **in writing**, then give the merge-count bound for this tree. This is where the fragile "complete transition set" floor is confirmed.
-- **Practice 12b — `Anchor`:** Independent Set from the state sentence; then Eel's 3-state merge; instrument the merge counter and confirm `O(N K²)`.
+- **Problems:** [Flowers — DPC Q](https://atcoder.jp/contests/dp/tasks/dp_q) [CORE, ~1900] · [Tower — DPC X](https://atcoder.jp/contests/dp/tasks/dp_x) [EDGE, ~2100] · [Grid 2 — DPC Y](https://atcoder.jp/contests/dp/tasks/dp_y) [EDGE, ~2200] · [Target — TDPC K](https://atcoder.jp/contests/tdpc/tasks/tdpc_target) [EDGE, ~2200].
+- **Frontier note:** Untested, and this is the chapter most likely to feel like "a trick" — so insist on the **pairwise swap**, never the sort key. Order: Q first (it needs no sorting at all — the input order *is* the DP order — and it is the course's first data structure), then X (the real exchange argument), then TDPC K (two-key sort + LIS), then Y (counting, defer-friendly). ~2 sessions. **Exit test:** the student derives `w_i + s_i` themselves and can state reorderings that fail; TDPC K ACs with both `lower_bound` and the two-key tie-break justified; the student explains why Y's obstacle `dp` is a counting device.
+- **Why the naive way breaks & the core idea:** if items can be arranged arbitrarily, a DP over input order cannot know what is above or below. But if **some** order is always at least as good, you may fix it and the DP becomes one-dimensional. The licence is a pairwise exchange: swap two adjacent items that are in the wrong order and show the constraint or value cannot get worse. Once sorted, "the best previous state with a key below mine" is a prefix maximum, which a BIT/segment tree answers in `log`.
+- **Sharp edges & optional variations:** Q: `dp[i] = a_i + max_{h_j < h_i} dp[j]`, BIT prefix max over `h_i − 1` (strict, heights distinct), values to `1e9` ⇒ `long long` BIT. X: sort by `w_i + s_i` ascending; `dp[j]` = best value with total weight exactly `j`; only `j ≤ s_i` may receive block `i`; iterate `j` **downwards**; the table only needs indices up to `max(s_i + w_i)` (verified against full enumeration) — not `Σw`; answer `max_j dp[j]`; `v_i ≤ 1e9` ⇒ `long long`. TDPC K: sort by left endpoint descending, ties by right endpoint descending, then strict LIS of right endpoints with `lower_bound`. Y: sort obstacles by `(r,c)`; `dp[i] = C(r_i+c_i−2, r_i−1) − Σ_{j<i, c_j ≤ c_i} dp[j]·C(Δr+Δc, Δr)`; binomials up to `H+W−2 ≤ 2·10^5` with factorials and inverse factorials mod `1e9+7`. **Variations:** equal keys are harmless in X but fatal in TDPC K (a verified contrast — the tie-break is load-bearing); Q with duplicate heights breaks the strict-prefix query (the constraint guarantees distinct, so it tests whether the student read it); Y with a blocked start (guaranteed not to happen) would make the subtraction count paths that never leave the start.
+- **Transfers to:** scheduling exchange arguments, sweep + BIT/segment tree, first-hit subtraction, nested-interval/LIS reductions.
+- **Private source notes:** X's editorial never states the capacity bound and its complexity silently uses it. Y's textual definition of `dp[i]` ("paths passing through no earlier obstacle") is a counting device only. TDPC K's `lower_bound` and two-key sort are both load-bearing.
 
----
+### 12. Digits and carries
 
-### N13 · Rerooting: all roots from one  `CORE · BUILD (division is first-contact)`
+- **Problems:** [Digit Sum — DPC S](https://atcoder.jp/contests/dp/tasks/dp_s) [CORE, ~1800] · [Number — TDPC E](https://atcoder.jp/contests/tdpc/tasks/tdpc_number) [CORE, ~1900] · [Banknote — NDPC D](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_d) [CORE, ~1800].
+- **Frontier note:** Untested and **entirely board-built** (the article has no digit DP). S and TDPC E are the same state `(position, tight, residue)` with two ways of precomputing the free suffix — do them together and make the student produce the suffix table once, then notice they wrote the same DP twice. NDPC D is the transfer where digits meet **borrowing**. ~2 sessions. **Exit test:** the `tight` flag is written before it is named; the student can justify leading-zero padding; NDPC D's "digit sum = minimum number of notes" is derived from the denominations.
+- **Why the naive way breaks & the core idea:** there are `10^L` numbers, but once a prefix is fixed the only things that matter are whether it is already smaller than the bound and what residue it has; the suffix contributes a table that depends only on its length. For NDPC D: with denominations `10^k`, the minimum note count for `M` is the digit sum of `M`, so the task is `min_{M ≥ N} digitsum(M) + digitsum(M−N)` — a digit DP where a borrow links the digits of `M` and `M−N`.
+- **Sharp edges & optional variations:** S: `K` is a string of up to `10^4` digits — never parse it as an integer; `D ≤ 100`; subtract 1 for the number 0; the card's `carry` is a misnomer (prefix residue, no arithmetic carry anywhere). TDPC E: `N ≤ 10^{10000}` as a string, `D ≤ 100`, `O(L·D·10) ≈ 10^7`; pad `N` with leading zeros — digit sum and order are unchanged, which is the justification for treating strings as numbers. NDPC D: process from the least significant digit with borrow `∈ {0,1}`; `M ≥ N` is enforced by the final borrow being 0; cost at each position is `d` (notes for `M`) plus `(d − n_d − borrow) mod 10` (notes for `M−N`); `T ≤ 10^4` ⇒ per-test work must be tiny (≈ `19 × 2 × 10`), so no `memset` of a large table. **Variations:** count in `[A,B]` by prefix subtraction (different answer); digit sum exactly `D` (same state, different question); base 7 (state unchanged, transitions change); digit **product** (products do not add, so the compression fails — a genuinely different DP).
+- **Transfers to:** every digit DP (ranges, residues, carries, base conversion), counting under a bound with a property, and the "prefix summary + free suffix" decomposition.
+- **Private source notes:** S's editorial calls the prefix residue `carry`, which collides with NDPC D's genuine borrow/carry — rename one at the board. TDPC E's "padding with leading zeros" paragraph is a skipped proof step and exactly the justification the student should be asked to produce.
 
-- **Anchors:** L666–740 (single-root subtree DP — the thing that becomes `O(N²)` if repeated).
-- **Primary card:** DPC-V Subtree.
-- **Motivating Fracture:** "for every vertex as root" run `N` times is `O(N²)` at `N = 1e5`. Moving the root across one edge changes only that edge's contribution.
-- **Core Invariant:** `down[v]` = answer for `v`'s subtree; `up[v]` = answer for everything outside, built from `up[parent]` and the siblings' `down`. The combination must be associative (product/min/max), which is what legalises reuse; when it is not invertible, use prefix/suffix products around the child.
-- **Contest Signature:** "for each vertex, the number of ..."; `N ≤ 1e5`; a modulus that is **not necessarily prime**; "assuming `v` must be black".
-- **Boundary & Sentinel Contract:** composite `M` → division fails (first contact); empty product = 1, empty min = `+INF`; root's `up` = identity; `N=1`; degree-1 vertices (the prefix/suffix array has length 1); recursion depth → iterative DFS at `N=1e5`.
-- **First contact (C3, rerooting):** `M = 10^9` non-prime. Construct a `down` value like 8 and show `gcd(8, 10^9) ≠ 1`, so no inverse exists. The division solution must fail on the spot; the prefix/suffix one must pass.
-- **Exit gate (fresh):** tree `1–2, 2–3, 3–4, 2–5` with `M = 12`; write `down[]`/`up[]` symbolically for `v=2` and name a value in the array that is non-invertible mod 12.
-- **Practice 13b — `Twist`:** Subtree with `M = 10^9` — division must fail, prefix/suffix must pass; then `N=2` in both directions, then `N=200000` as a stack-depth check.
+### 13. Profiles: one layer at a time
 
----
+- **Problems:** [Polyomino — NDPC A](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_a) [CORE, ~1600].
+- **Frontier note:** Untested; full depth; a single-problem chapter by design. Two numbers on the statement are the lesson: `N ≤ 40` is a decoy (it invites `2^40` search, while the state count is constant), and there is **no modulus** — the answer at `N = 40` is `25,366,833,951,139`, so "no modulus" is not "`int` is fine". Derive the frontier states at the board; no editorial and no reference solution is stored. ~1 session. **Exit test:** the state list is derived and every transition drawn, and the student can say why the number of states does not grow with `N`.
+- **Why the naive way breaks & the core idea:** tilings are exponential, but sweeping column by column, the only information crossing the cut is **which frontier cells are already covered**. Everything left of the cut is settled and can never be touched again — the same "what crosses the boundary?" question as Ch. 2, 6 and 9, one dimension down.
+- **Sharp edges & optional variations:** `long long` throughout — the `N = 40` answer alone is 2.5·10^13, and the per-state counts are of the same order, so `int` overflows silently; the four L-tromino orientations and which of them stick out of the column; the base is column 0 empty; the answer is the empty-frontier state after column `N`. **Variations:** `3 × N` with trominoes (the frontier becomes two rows — more states, different answer); forbidden cells (the reachable state set shrinks, same machinery); counting by the number of L-trominoes (adds a dimension).
+- **Transfers to:** frontier/plug DP, connectivity profiles (TDPC S, vault), and any problem where a cut separates decided from undecided cells.
+- **Private source notes:** NDPC A's card has no editorial and no solution; the `2×N` state enumeration must be prepared backstage (empty column / upper filled / lower filled / both filled, plus the sticking-out cases). The `N ≤ 40` contrast is worth pointing out *after* the profile is found, never before.
 
-### N14 · The graph is the order  `CORE · FLOOR + BUILD (SCC, multi-test hygiene)`
+### 14. Stretch vault (above the 2000 line — optional, mechanism-grouped)
 
-- **Anchors:** L583–608 (order = dependency), L157–206 (forward relaxation).
-- **Primary cards:** DPC-G Longest Path, NDPC-B DAG. **Practice-only:** TDPC-R (EDGE: SCC + two-path DP).
-- **Motivating Fracture:** "longest path" is not a function on a cyclic graph; memoised DFS recurses forever; a topological order does not exist until SCCs are contracted. *(Audited floor: the non-topological label order and the read-before-finalised bug are already spotted — this sitting is condensation and hygiene.)*
-- **Core Invariant:** on a DAG any reverse-topological order is a valid DP order; inside an SCC every vertex reaches every other, so path counting needs condensation (or matrix power, N15), never a recurrence on vertices.
-- **Contest Signature:** "the graph has no cycles"; `N,M ≤ 2e5`; "number of paths from 1 to N"; self-loops left after condensation; multiple test cases.
-- **Boundary & Sentinel Contract:** visited-mark timing (entry vs exit); unreachable target → 0 or `−INF`, never "uninitialised"; reinitialise per test case (vectors, not globals); a 1-vertex DAG; self-loop after contraction; SCC size when counting vertices vs edges.
-- **First contact (C3, SCC condensation):** add a 2-cycle to DPC-G (`7→3` and `3→7`) — the DP must condense or loop. Then NDPC-B with `T` test cases including a 1-vertex DAG.
-- **Exit gate (fresh):** DAG `5→3, 5→1, 3→2, 1→4, 2→4` (labels reversed relative to the topological order): longest path = 3 edges. Then add `4→5` and say exactly what must happen (condense; the original problem is no longer well-defined). Pass includes "the label order is not the DP order".
-- **Practice 14b — `Boundary`:** DPC-G with the 2-cycle; NDPC-B with `T` test cases and a 1-vertex DAG; then a 2-vertex graph with both directions and no other edges.
+Do not schedule these. Open one only when a core chapter leaves an appetite, or when a specific gap (e.g. "I can't see how to remove an inner loop") is best answered by the canonical example.
+
+- **Matrix / linear recurrence:** Fibonacci — TDPC T [~2600]. Extends Ch. 10: compute the `K`-step map without building a `K×K` matrix, using the characteristic polynomial.
+- **Tree DP with boundary states:** Eel — TDPC P [~2400]; Tree — TDPC N [~2400]. Extend Ch. 9: `(open/closed path count)` states and multinomial interleaving of child blocks. TDPC P's off-by-one convention is the trap (opening an edge does not increment; joining two opens does; the root's open path is free).
+- **Subset / bitmask heavy:** Graph — TDPC R [~2600] (two paths, symmetric state); Update Positions — NDPC I [~2300] (insertion DP by decreasing value); Set — NDPC F [~2400] (Cartesian tree + tree knapsack). Extend Ch. 8.
+- **String counting:** Lexicographical — TDPC G [~2400] (distinct subsequences + unranking); Knapsack — TDPC H [~2400] (colour-sorted 4D DP); String — TDPC O [~2600] (gap DP with binomials); Concatenation — TDPC Q [~2600] (7-bit window + cut mask). Extend Ch. 4/5.
+- **Connectivity profiles:** Grid — TDPC S [~3000]. Extend Ch. 13: labels for components, union-find, normalisation.
+- **Optimisation structures:** Frog 3 — DPC Z [~2500] (convex hull trick from the quadratic); Intervals — DPC W [~2400] (lazy segment tree sweep). Extend Ch. 5/11.
+- **Algebra / number theory:** Addition and Subtraction — NDPC K [~2600] (sign choice + generating function); LCM — NDPC L [~2400] (divisor zeta); Numeral — NDPC M [~2600] (SOS DP over OR-subsets); Knapsack — NDPC N [~2800] (unbounded knapsack + eventual periodicity). Extend Ch. 3/8.
+- **Advanced paradigms:** Mouth — NDPC G [~2800] (dynamic ear DP + segment tree); Number and Total — NDPC J [~2400] (two-constraint digit DP); Game — NDPC O [~3000] (Alien DP + max-plus convolution); LIS — NDPC P [~2600] (state design at `10^{18}`); Union of Intervals — NDPC Q [~2600] (polynomial interpolation of a DP); Triples — NDPC R [~2800] (per-bit inclusion–exclusion); Two doors — NDPC S [~3200] (planar dual + characteristic 2); Independent Set — NDPC T [~3400] (static top tree).
+
+**Vault index (verified links).** DPC: [Intervals W](https://atcoder.jp/contests/dp/tasks/dp_w) · [Frog 3 Z](https://atcoder.jp/contests/dp/tasks/dp_z). TDPC: [Lexicographical G](https://atcoder.jp/contests/tdpc/tasks/tdpc_lexicographical) · [Knapsack H](https://atcoder.jp/contests/tdpc/tasks/tdpc_knapsack) · [Tree N](https://atcoder.jp/contests/tdpc/tasks/tdpc_tree) · [String O](https://atcoder.jp/contests/tdpc/tasks/tdpc_string) · [Eel P](https://atcoder.jp/contests/tdpc/tasks/tdpc_eel) · [Concatenation Q](https://atcoder.jp/contests/tdpc/tasks/tdpc_concatenation) · [Graph R](https://atcoder.jp/contests/tdpc/tasks/tdpc_graph) · [Grid S](https://atcoder.jp/contests/tdpc/tasks/tdpc_grid) · [Fibonacci T](https://atcoder.jp/contests/tdpc/tasks/tdpc_fibonacci). NDPC: [Set F](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_f) · [Mouth G](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_g) · [Update Positions I](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_i) · [Number and Total J](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_j) · [Addition and Subtraction K](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_k) · [LCM L](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_l) · [Numeral M](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_m) · [Knapsack N](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_n) · [Game O](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_o) · [LIS P](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_p) · [Union of Intervals Q](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_q) · [Triples R](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_r) · [Two doors S](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_s) · [Independent Set T](https://atcoder.jp/contests/ndpc/tasks/ndpc2026_t).
+
+Coverage check: 41 core + 25 vault = 66 cards, every problem accounted for.
 
 ---
 
-### N15 · Layers that repeat: matrix power and the accumulator row  `CORE · BUILD (accumulator is first-contact)`
+## What to Hold Back (Problem Punchlines for In-Course Discovery)
 
-- **Anchors:** L331–337 (matrix power), L459–509 (TourCounting accumulator).
-- **Primary card:** DPC-R Walk. **Practice-only:** TDPC-T (EDGE linear recurrence), NDPC-E (doubling, the min/monoid cousin), TDPC-M (STRETCH, subset path counts).
-- **Motivating Fracture:** `K ≤ 1e18` makes layer iteration impossible; the layer transition is linear and layer-independent, so the whole iteration is one matrix power. But the answer may be a sum over layers, which `M^K` alone cannot express.
-- **Core Invariant:** `V(i+1) = V(i)·M` (row-vector) and `M^K` by squaring; if the answer is `Σ_i f(V(i))`, add accumulator coordinates to `V` and matching rows/columns to `M` so the running sum is part of the state.
-- **Contest Signature:** `N ≤ 50`, `K ≤ 1e18`, "number of walks of length exactly K", "after K steps", a linear recurrence with a huge index.
-- **Boundary & Sentinel Contract:** `A^0 = I`; row vs column convention decides **where the answer index lives** (row-vector: the last coordinate; column-vector: the first entry after `M^K·V`); subtract the `n` empty cycles in TourCounting; modular products need `long long`; `K=1`; accumulator matrix size `2n × 2n`. F15: D&C path recovery is `O(T log N)`, not `O(log N)`, and **no card needs it** — mention and move on.
-- **First contact (C3, matrix accumulator):** (a) what does `K=0` compute (sum of all entries of `I` = `N`)? (b) where does the answer index live under your convention?
-- **Exit gate (fresh):** 3-vertex graph `1→2, 1→3, 2→1, 3→2`. For `K = 0,1,2` report "walks of length exactly K summed over ordered pairs" and "sum over lengths ≤ K", predicted from `I + A + A²` by hand, then confirmed with a 10-line brute force. State the accumulator row explicitly.
-- **Practice 15b — `Boundary`:** DPC-R with `N=1` (single vertex, no self-loop → 0 for every `K`) and `K=1`; then the `2n × 2n` accumulator for "sum over lengths ≤ K" checked against brute force at `K=5`.
+These are the reductions the student must produce. Do not state them before an attempt; if stuck, ask a question that makes the reduction necessary rather than handing it over. **One exception:** Chapter 7's expectation *form* (`E[s] = 1 + Σ p E[next]`) is a foundation, not a punchline — it is taught, not withheld. Only the specific drop-back targets and cancellations stay hidden.
 
----
-
-### N16 · The bound is a flag: digit DP  `CORE · FLOOR (tight) + BUILD (carry, conventions)`
-
-- **Anchors:** absent from the article (F13); L279–296 (prune impossible states) reads as the same idea.
-- **Primary cards:** DPC-S Digit Sum, TDPC-E Number, NDPC-J Number and Total, NDPC-D Banknote. **Practice-only:** TDPC-G (EDGE: digit DP + k-th construction, cap counts at K).
-- **Motivating Fracture:** `N < 10^10000` cannot be a loop bound; the only thing the prefix must remember about the bound is whether it is still equal to it. Once tight drops the rest is free. *(Audited: tight is derived from the sufficiency test, and the all-zero subtraction is reasoned correctly. The reasoning is a floor; the click was wrong → FRAGILE, C4.)*
-- **Core Invariant:** tight is monotone (`1→0` once), so the state graph is a DAG; the digit sum / residue / carry is pure arithmetic and must be bounded by the arithmetic, not by the bound.
-- **Contest Signature:** "count integers in `[0,N]` with property P"; `N` given as a string; the property depends on digit sum mod `D`, on prime exponents of a product, or on a carry chain; "positive integers".
-- **Boundary & Sentinel Contract:** leading zeros (DPC-S's suffix table vs TDPC-E's padded-string view); subtract the all-zero number exactly once; `tight=1` survives to the last digit and contributes 1 to the answer, not 0; NDPC-J's carry is bounded by `Σ A_i ≤ 200`; NDPC-D's borrow is the same flag with the sign flipped, over denominations `10^0..10^100`; `T` test cases → clear the table.
-- **First contact (C3, digit carry/borrow bound):** NDPC-J — what is the largest carry that can arrive at a digit, and why must the state bound it? Then TDPC-E with `N=0` (illegal input, but the printed value reveals whether the all-zero was subtracted).
-- **Exit gate (fresh):** (1) count `x ∈ [0,47]` with digit sum ≡ 0 mod 3 → **16**, computed through the tight table (write the `dp[pos][rem][tight]` rows for tens-digits 4 and 7 first). (2) TDPC-E on `N="25", D=4`, then say what your code prints for `N="1"` and for `N="0"`. Pass requires the number 16 and the all-zero sentence.
-- **Practice 16b — `Anchor`:** TDPC-E with the smallest legal `N` and `D=1`; NDPC-D with `N` one digit and with `N` all nines; NDPC-J with `N=1`.
-
----
-
-### N17 · The decided/undecided boundary: profile DP  `CORE (late) · BUILD`
-
-- **Anchors:** L741–793 (layer + profile, `(1+φ)^N`), L882–926 (ConstructionFromMatches), L297–310 (two layers).
-- **Primary card:** NDPC-A Polyomino. **Practice-only:** TDPC-S, TDPC-Q (STRETCH).
-- **Motivating Fracture:** a 2×N tiling cannot be counted by `dp[column]`; the overhang into the next column is information the column index does not carry. And the cost is not the number of profiles but the number of `(profile, next-profile)` pairs (F7).
-- **Core Invariant:** at any cut between columns the only thing the future needs is which cells of the cut are already covered; the transition enumerates every way to fill one column consistently with that boundary; the answer is the state after the last column with an empty profile.
-- **Contest Signature:** one dimension small (`≤ 6`, or width fixed at 2), "tile/cover/place pieces", count modulo, `N` up to 40+ with width 2.
-- **Boundary & Sentinel Contract:** choose `min(H,W)` as the profile width; clear the destination layer (F8: the article preaches two layers then allocates all of them); the answer needs the empty final profile, not the sum over profiles; `N=1`; reset per source profile; the pair count is `Σ_h C(N−h,h)·2^{N−2h} ≈ 2.414^N`, not `(1+φ)^N = 2.618^N` (F7) — ~1.0845× per unit width, i.e. 25–30× at width 40, which is exactly why the card must be solved at width 2.
-- **First contact (C3, profile boundary):** `N=1,2,3` by hand (1, 2, 5) against a brute-force tiling enumerator.
-- **Exit gate (fresh):** with dominoes + L-trominoes, hand-tabulate `N=1..4` (1, 2, 5, 11) and produce `N=5` (24) by program; then answer "how many `(profile, next-profile)` pairs does your code enumerate for width 3?" by counting, not quoting φ.
-- **Practice 17b — `Anchor`:** Polyomino hand-count `N=1,2,3` vs brute force vs program; then a 3×N domino-only variant at `N=2,3,4` (3, 0, 11 — the 0 is the parity trap).
-
----
-
-### N18 · When the DP order must be proven: exchange arguments  `CORE (late) · FIRST-CONTACT`
-
-- **Anchors:** absent (F13); L319–329 (reorder/rotate) is the nearest thing.
-- **Primary card:** DPC-X Tower.
-- **Motivating Fracture:** Tower is a knapsack only after an order on the blocks is proved. Without the proof the DP processes an arbitrary input permutation and silently misses the optimum.
-- **Core Invariant:** if swapping two adjacent items never worsens the objective whenever a stated key is out of order, then some optimal solution is sorted by that key; only then may the DP process items in that order. For Tower, `i` above `j` is safe iff `w_i + s_i ≤ w_j + s_j`.
-- **Contest Signature:** items with two attributes and a pairwise feasibility condition (`w_i + s_i`); "arrange in some order"; `N ≤ 1000` with `w,s ≤ 1e4`.
-- **Boundary & Sentinel Contract:** sort key `w+s` ascending; ties are free; after sorting the state is "weight strictly below", so the transition requires `j ≤ s_i` **before** adding; `j` descending; the capacity axis is `max s_i`, not `Σ w`; `N=1`.
-- **First contact (C3, exchange argument):** (a) all `w+s` equal — every order is optimal, so a wrong key is invisible; (b) one block that only fits on top. Both on the board before the card opens.
-- **Exit gate (fresh):** blocks `(w,s,v) = (2,5,10), (3,1,7), (4,2,9), (1,3,5)`. Sort by `w+s`, run the knapsack, verify against brute force over all `4!·2^4` placements; then name the pair the exchange argument compares and why ties are free.
-- **Practice 18b — `Twist`:** the tie case; then a block with `s=0`; then `N=1`.
+- **Ch. 1 — DPC B:** the predecessor count is `K`, so a plain `O(NK)` loop is enough; no window structure.
+- **Ch. 2 — DPC G:** `0` as "uncomputed" is safe only because `dp = 0` implies no outgoing edges, so re-exploration is `O(1)`.
+- **Ch. 2 — NDPC B:** clear only what a test touched; `T ≤ 1e5` makes a full `memset` quadratic.
+- **Ch. 2 — NDPC H:** the attainable coin counts at a cell form a **full interval**; `DR ↔ RD` changes the count by at most 1.
+- **Ch. 3 — TDPC A:** the question asks for distinct **scores**, not subsets — and `0` counts.
+- **Ch. 3 — DPC E:** the final scan needs `minW[v] != INF` **and** `minW[v] ≤ W` (already known — the hidden part is only that the code must put it there).
+- **Ch. 4 — DPC F:** reconstruction must check `s[i-1] == t[j-1]` and the diagonal value; ties break "move to the larger neighbour".
+- **Ch. 4 — NDPC C:** the state is the triple of matched prefix lengths; appended letters advance them.
+- **Ch. 5 — DPC M:** a sliding window over the previous row, via prefix sums, with the lower index clamped.
+- **Ch. 5 — DPC T:** the state is the **rank** of the last element; `<` reads a prefix sum, `>` a suffix sum, and the rank shifts by one on insertion.
+- **Ch. 5 — TDPC F:** the deque holds the `K+1`-long window; insert the row sum at the front, drop the tail whose run would exceed `K`.
+- **Ch. 5 — TDPC L:** suffix sums of new pairs from `j` to `i`, factor `2`, prefix maxima over `k ≤ j`.
+- **Ch. 6 — DPC N:** the last split, plus prefix sums for the segment cost.
+- **Ch. 6 — DPC L / TDPC B:** difference state with a sign flip; `(DP + total)/2` in the two-pile version.
+- **Ch. 6 — TDPC I:** erasability test `len % 3 == 0 && dp[L][R] == len/3`, and the split rule that `iiwiiwiwi` forces.
+- **Ch. 7 — DPC I:** two conventions (exactly-j and at-least-j); the answer is the strict-majority tail.
+- **Ch. 7 — TDPC C:** the opponent block `⌊(j-1)/2^i⌋` and the per-round probability product.
+- **Ch. 7 — TDPC D:** factor `D` over `{2,3,5}`, cap the exponents, and `5 → (j, k, min(l+1, p5))`.
+- **Ch. 7 — DPC J:** cancel the `(n−x−y−z)E` self-loop; the denominator is `x+y+z`; iterate by `x+y+z`.
+- **Ch. 8 — DPC O:** `popcount(S)` identifies the next man; forward relaxation over unmatched women.
+- **Ch. 8 — DPC U:** precompute `cost[S]`, then peel the group containing the **lowest set bit** (`3^N`).
+- **Ch. 8 — TDPC J:** per aim `(3 + Σ dp[S∖{k}])/q` with `q` = remaining objects within distance 1; min over aims.
+- **Ch. 9 — DPC P:** two colours per node, product over children.
+- **Ch. 9 — DPC V:** reroot with prefix/suffix products because `M` is composite — never divide.
+- **Ch. 10 — DPC R:** `A^K` by squaring; the answer sums **all** entries.
+- **Ch. 10 — NDPC E:** binary lifting on "the next event that starts after this one ends", clipped to `[L,R]`.
+- **Ch. 10 — TDPC M:** per-floor `c(r,s)` by a subset DP, then `C^H`; `dp[0][1]` is the formal "stop in room 1".
+- **Ch. 11 — DPC Q:** Fenwick prefix maximum over heights strictly below `h_i`.
+- **Ch. 11 — DPC X:** sort by `w + s`; capacity bounded by `max(s_i + w_i)`; descending weight loop.
+- **Ch. 11 — DPC Y:** sort obstacles; subtract paths through the *first* obstacle hit, using binomials.
+- **Ch. 11 — TDPC K:** nested intervals ⇒ two-key sort then a strict LIS on right endpoints with `lower_bound`.
+- **Ch. 12 — DPC S:** `(position, tight, residue)` plus a free-suffix table; subtract the zero.
+- **Ch. 12 — TDPC E:** pad with leading zeros; same state; subtract the zero.
+- **Ch. 12 — NDPC D:** minimum notes for `M` is the digit sum of `M`; a borrow DP over the digits of `M − N`.
+- **Ch. 13 — NDPC A:** column-frontier profile states; the `N ≤ 40` bound is a decoy.
 
 ---
 
-### N19 · Index by the objective: dominance and rotation  `CORE (late) · BUILD`
+## Private Source Notes (backstage — do not surface verbatim)
 
-- **Anchors:** L319–329 (rotate — the condition stated there is monotonicity, not dominance; F11), L279–296 (prune impossible).
-- **Primary cards:** DPC-E Knapsack 2, NDPC-H Coin.
-- **Motivating Fracture:** Knapsack 2 has values `≤ 1e3·N` but weights `≤ 1e9`, so the capacity axis explodes. Swapping the axes works only if "more value, less weight" dominates for **every** continuation — the step the article never states.
-- **Core Invariant:** `(W1,R1)` dominates `(W2,R2)` iff `W1 ≤ W2`, `R1 ≥ R2`, and every transition is monotone in both coordinates; then `min weight achieving exactly value R` is a sufficient state and feasibility is a scan at answer time.
-- **Contest Signature:** `Σ v_i` small with `W` huge; "cost vs quality with a hard budget"; per-cell min/max envelopes where the reachable counts form an interval (NDPC-H).
-- **Boundary & Sentinel Contract:** `R` must be achieved *exactly* → `INF` init, not all-zeros; the answer is the largest `R` with `W(R) ≤ C` (a scan, not `dp[V]`); `v=0` items; the dominance proof must name the continuation.
-- **First contact:** none from C3 — build (dominance was not probed).
-- **Exit gate (fresh):** items `(w,v) = (5,4), (3,3), (7,5), (2,2)`, `W=9`. Write the exact-`R` min-weight table, then the feasibility scan → answer **7** (feasible `R` = 0,2,3,4,5,6,7 with weights 0,2,3,5,5,7,8; `R=8` costs 10, `R=9` costs 12). Pass includes "why `R=8` is not the answer".
-- **Practice 19b — `Boundary`:** add a `(w=1, v=0)` item; then an unreachable `R`; then NDPC-H's "reachable counts form an interval" argument (min/max DP + IVT via adjacent swaps).
+### Article (`article.md`, TopCoder treatise)
 
----
+- **Structure.** The three parts are peers, not a syllabus (the article says so). The course reorders them: Part 1's mechanics first, then Part 3's state domains, with Part 2's optimisations pulled forward only when a problem creates the need (Ch. 5, 10).
+- **Coverage gap that matters most for this student.** The treatise has **no expectation section, no probability-system algebra, no games**, and its mention of probability is a single clause in the combinatoric-DP paragraph. Ch. 7 therefore has no fallback text; the board, the cards and self-made traces are the entire source. Likewise absent: sliding-window maxima, exchange/sorting arguments, digit DP, `3^N` partition enumeration (except inside GameWithGraphAndTree), and profile-state enumeration.
+- **Part 1, coins:** the prose code uses em-dashes for minus (`mink[P — wgt[i]]`) — copy-paste hazard. The table for `S = 11, W = {1,3,5}` is correct (`0 1 2 1 2 1 2 3 2 3 2 3`).
+- **Part 1, LCS:** the result table's header is misaligned; values are correct. The reconstruction section's "first approach" (recompute) is described as needing backward style — true, and a reason to store back-links.
+- **Part 1, optimal substructure:** the TSP counterexample is compressed. The failure is that `(k,l)` does not encode *which* cities were visited, so the subpath is not a subproblem of the same type. Say it that way; the article's phrasing invites "DP is wrong for TSP" instead of "the state is insufficient". Use it in Ch. 8 **after** the mask has been invented — as the mirror image.
+- **Part 2, two layers:** the memory trick is trivial; the divide-and-conquer path recovery paragraph is dense and asserts monotonicity without proof. Park it; not needed below 2400.
+- **Part 2, rotation:** the licence ("increasing weight worsens the partial solution") is informal. The FPTAS aside is a good illustration but warns that rounding **values** is safe while rounding **weights** breaks feasibility — worth one sentence if the student asks.
+- **Part 2, matrix power:** the main text assumes the answer is the last layer; the accumulator trick appears only inside the TourCounting example. Flagged as a skipped step in Ch. 10.
+- **Part 2, TheSequencesLevelThree:** the best worked example of state pruning in the whole article: `(k,x,y,L,R)` → `y = k−x` → delete `x` → `max(L,R) = k` → `(k,d,m)`. Vault-only, but it is the single best "equivalence classes" reading for a student who invents states as well as this one does — consider it as an optional reward after Ch. 8.
+- **Part 2, GameWithGraphAndTree:** the prose refers to "the 5th constraint" but the constraint list is missing from the excerpt. The real content is the `O(3^N)` enumeration.
+- **Part 3, substrings:** the scheme uses **inclusive** `R` and splits at `M ∈ [L+1, R−1]`, while Ch. 6's DPC N uses another convention; pick one per problem and say it out loud.
+- **Part 3, subtrees:** the internal-DP pseudocode has placeholders (`memset(intres[k], ?, ...)`, `DPTransition`/`DPMerge` undefined) and never shows how `na` is computed in general; it also omits the `ΣK_i = N−1` complexity consequence for `memset` placement. Read the text, not the code.
+- **Part 3, profiles:** complexity `O(M(1+φ)^N)` is asserted; `Search` mutates globals `k,p,q`, and the DP transition happens only at `i == N`, so `res[k][p]` is safe to read during the search. Mention only if the student worries about re-entrancy.
+- **Part 3, Breaking strings:** `mid[L][R] = l;` is a typo for `mid[L][R] = L;`. Knuth's conditions are asserted, not stated — do not present Knuth as generally applicable.
+- **Part 3, ConstructionFromMatches:** the ASCII diagram is mangled and `b = top[i]-4 - (u+a+p)` has an unexplained `4`. Skip the example; the idea survives.
+- **Part 3, InformFriends:** the submask loop `for (j=i; j>0; j=(j-1)&i)` excludes `j=0`, fine because `cover[0]` is false.
+- **Duplication:** GameWithGraphAndTree appears twice with different complexity claims (`O(3^N N^{2.5})` vs `O(4^N N^3)` before optimisation). Not a contradiction; do not quote both as independent.
 
-### N20 · Query-shaped aggregates: lazy sweep and CHT  `EDGE (opt-in)`
+### Problem cards (typos, shortcuts, and things that will mislead)
 
-- **Anchors:** L339–343 (complex structures), L319–329 (dominance).
-- **Primary cards:** DPC-W Intervals, DPC-Z Frog 3. **Practice-only:** NDPC-G (STRETCH, ear DP + segment tree).
-- **Motivating Fracture:** the transition is a query over a set whose shape changes with the index — a range that grows or shrinks as the sweep advances — or an argmin over lines with monotone slopes.
-- **Core Invariant:** maintain exactly the aggregate the transition asks for, updated at the same event that changes the queried set; if the argmin index is monotone in the query parameter, a pointer/deque replaces the search.
-- **Contest Signature:** `N,M ≤ 2e5`; "an interval contributes iff it contains the last chosen position"; `(h_i−h_j)² + C` with increasing `h`; `h_i` distinct.
-- **Boundary & Sentinel Contract:** apply the lazy range-add to exactly the positions `j < l_i` at the moment the sweep reaches `r_i` (both endpoints and the event order matter); signed `a_i` (±1e9) → max must start at `−INF` and an empty range is a no-op; CHT overflow (`h ≤ 1e9` → squares need `__int128` or cross-product comparison), decreasing/increasing slopes, monotone query order.
-- **First contact (C3, prefix-max over values, shared with N7):** `h = {3,3,1,2}` strictness — here the question is "does your Fenwick issue `< h_i` or `≤ h_i`, and does the card's distinctness make the difference invisible?"
-- **Exit gate (fresh):** (1) Intervals on `N=3` with `[1,2] w=5` and `[2,3] w=6` → answer 11, with the sweep table by hand. (2) Frog 3 on `h={1,3,4}, C=5` → `dp[3] = 14`, and the deque invariant stated.
-- **Practice 20b — `Twist`:** Flowers with reversed `h` (query becomes a suffix), equal `h` (strictness), then Frog 3 with decreasing `h` to watch the monotone deque break — that is the precondition, not an implementation detail.
+- **DPC A / DPC B:** spurious `min_{0≤i+j<N}` wrapper on the jump-transition formula (no `j` inside).
+- **DPC D:** "because `v_i ≤ 10^9`, it is not feasible to store `v_i`" — garbled; the reason is the bounded `W`.
+- **DPC E:** "instead of a high value of `v_i`, there is a high value of `w_i`" — garbled (actually `W ≤ 10^9`, `v_i ≤ 10^3`).
+- **DPC F:** reconstruction advice is tie-unsafe; sample outputs admit several correct LCS strings (stored solution prints `ayb` on sample 1).
+- **DPC J:** the final formula is correct, the sentence "multiplying by `n` and using `x+y+z = n`" is false (empty plates exist); the correct step is cancelling `(n−x−y−z)E`.
+- **DPC M:** `pre[j-a_i-1]` is written without clamping.
+- **DPC S:** `carry` is a misnomer (prefix residue, not arithmetic carry).
+- **DPC T:** array indices lag the prose by one (`dp[i][j]` after `i` signs describes `1..i+1`).
+- **DPC W:** the `cost(j,i)` description is garbled; the leftmost-selected-1 attribution is the correct model. (Vault.)
+- **DPC X:** capacity bound omitted; verified that `max(s_i+w_i)` suffices (brute force over all subsets/orders, 3000 random cases).
+- **DPC Y:** the `dp` of an obstacle is a counting device, not a valid path count.
+- **TDPC A:** the two transition lines are misindexed (both should be `dp[i+1][...] |= dp[i][...]`); the solution's `nxt[j] = nxt[j+x] = 1` form is correct and clearer.
+- **TDPC B:** base transitions use `dp[i-1][j]` / `dp[i][j-1]` where the untouched coordinate must be `0`.
+- **TDPC C:** `dp[0][j] = 1` means "in round 0", not "winning"; opponent formula is 1-indexed.
+- **TDPC D:** outcome `5` omits the `+1` on the exponent of 5 (should be `min(l+1, p5)`).
+- **TDPC F:** "insert sum at front, delete last" hides which cell is dropped; write the length-`K+1` window explicitly.
+- **TDPC G:** the stated recurrence is off by one. Verified correct form: with `X[n] = 1` (empty string counted) and `k` = first position `> i` with `s[k] = s[i]`, `X[i] = 2X[i+1] − X[k+1]`; and the unranking count for a character at position `p` is `X[p+1]`, not `X[p]`. (Brute-force checked on 5000 random strings.) Vault.
+- **TDPC I:** the erasability criterion is the punchline; the `iiwiiwiwi` example is worth keeping.
+- **TDPC K:** the two-key sort and `lower_bound` (not `upper_bound`) are both load-bearing.
+- **TDPC L:** prefix maxima suffice; the card's `O(N²)` note improves on the editorial's `O(N² log N)`.
+- **TDPC M:** the "descend to floor 0" device is correct but unexplained; `c(r,r) = 1` (zero-length path) is a genuine base case, not a convenience. Matrix size is `R × R ≤ 16 × 16` — **not** `2^R`.
+- **TDPC N:** the final division by 2 is modular (`× inv2`); `dp[v]` counts orders whose first edge is incident to `v`. Vault.
+- **TDPC P:** the index convention is the trap: opening an edge does **not** increment; joining two open paths at a vertex increments (`f2[v][x+1] = g2[x]`); the root's open path is free, hence `f0[K] + f1[K-1] + f2[K]`. Verified against brute force on 400 random trees. Vault.
+- **TDPC Q:** initial window is left-padded zeros; answer sums states with bit 0 set. Vault.
+- **TDPC R:** subtract the super-source/super-sink contribution per implementation; `dp` is symmetric. Vault.
+- **TDPC S:** label normalisation and the "≤ 3 components per column" argument need `H ≤ 6`. Vault.
+- **TDPC T:** needs `a_1..a_{2K-1}` and arithmetic in `F_p[x]/(f)`; the card's overflow analysis is correct. Vault.
+- **NDPC A–G, I, J, L, M:** **no editorial and (except H, K, Q) no reference solution stored.** Backstage derivations needed: A profile DP; B topological DP; C subsequence automaton; D digit/borrow; E binary lifting; F Cartesian tree + tree knapsack; G dynamic ear DP + segment tree; I insertion DP; J two-constraint digit DP; L divisor zeta; M SOS DP. Budget extra board time; none of these is "look up the trick" material in this workspace.
+- **NDPC H:** editorial's `O(N²)` memory is beatable by rolling rows + a difference array; min/max fit in 16 bits; the intermediate-value claim was brute-force verified.
+- **NDPC K/Q:** stored solutions use formal power series exponentiation / polynomial interpolation — far above the ceiling; extract only the transferable ideas.
+- **NDPC R:** the per-bit strategy table is a randomized-complexity argument (`4/3` expected per bit). Do not present it as a clean DP.
+- **NDPC S/T:** planar dual / static top tree; stretch-only.
 
----
+### Verification status of the source set
 
-### N21 · Stretch: change the index set  `STRETCH`
-
-- **Anchors:** absent. Nearest: L339–343.
-- **Primary cards:** NDPC-M Numeral (SOS), NDPC-L LCM (divisor zeta), NDPC-K Addition and Subtraction (FPS log/exp), NDPC-Q Union of Intervals (interpolation). **Parked:** NDPC-P, NDPC-R, NDPC-S, NDPC-T.
-- **Motivating Fracture:** a convolution over subsets, divisors or degree is `O(3^N)` or `O(S²)`; the transform turns it pointwise because the index set is a product of chains.
-- **Core Invariant:** zeta/Möbius over the subset lattice (bit-by-bit), divisor zeta over prime exponents, FPS `log`/`exp` over a prime field, and `M+1` evaluations determine a degree-`M` polynomial.
-- **Contest Signature:** "for every mask, the sum over its submasks"; `N ≤ 22`; LCM/divisor structure; "answer for every K" with a degree bound.
-- **Boundary & Sentinel Contract:** transform direction and inverse; the modulus must exceed the degree for FPS division (998244353 vs `S ≤ 2e5`); interpolation needs distinct points; `long long` products.
-- **Exit gate (fresh):** SOS on `N=3` against brute force for every mask; divisor zeta for `n ≤ 12` against brute force.
-- **Practice 21b — `Anchor`:** as above, plus one "why not `O(3^N)`" arithmetic check.
-
----
-
-### N22 · Stretch: price a constraint, exploit concavity  `STRETCH`
-
-- **Anchors:** absent.
-- **Primary cards:** NDPC-O Game (Alien + max-plus concavity), NDPC-N Knapsack (unbounded + eventual greedy).
-- **Motivating Fracture:** "exactly `k` groups" is a dimension; pricing it with `λ` removes the dimension, and concavity makes the binary search on `λ` recover `k`; max-plus convolution of concave sequences is linear.
-- **Core Invariant:** `f(k) = min cost with exactly k`; `g(λ) = min_k (f(k) + λk)` is the lower envelope; if `f` is convex the optimal `k` is monotone in `λ`, and the answer is recovered as `g(λ) − λk`.
-- **Contest Signature:** "exactly K segments/groups"; `N ≤ 1e5` with `K` large; a max-plus merge inside an interval DP.
-- **Boundary & Sentinel Contract:** integer `λ` and tie-breaking to recover the count; concavity must be proved; reconstruction from `g(λ) − λk`.
-- **Exit gate (fresh):** a 1D "exactly k segments" toy with brute-force `f(k)` for all `k`, then recover `f(k)` by pricing.
-- **Practice 22b — `Boundary`:** as above.
-
----
-
-## [FIRST_CONTACT_REGISTER]
-
-Every row is probed **at the node**: none may be cited as a foundation, and none may be assumed from the audit. "Pass looks like" is the minimum acceptable board output before the node's cards open.
-
-| # | Item | Node(s) | Gate question | Pass looks like |
-|---|---|---|---|---|
-| FC1 | exact-vs-at-most init | N1 (as statement meaning), N4 (as answer index) | `w={2,3,4}, v={3,4,5}, W=6`: fill both inits, report `dp[1]` | exact `−INF`, at-most 0, and "the answer index differs, not the value" |
-| FC2 | `k!` for `k>2` | N5, N11 | partition `{1..6}` into 3 unlabelled pairs | 15, and 90 = 15·3! for the uncorrected loop |
-| FC3 | negative modulo | N7 | `(pre[j]−pre[j−a−1]) % (1e9+7)` with `pre[j]=3, pre[j−a−1]=5` | −2 in raw C++, `1000000005` with the fix |
-| FC4 | merge-cost accounting | N12 | `sum K_i = N−1` vs per-vertex `memset`, on a 6-vertex tree | `O(N A²)` vs `O(N² A)`, both bounded aloud |
-| FC5 | matrix accumulator | N15 | `K=0` on DPC-R; where the answer index lives | `N` (sum of `I`), and the convention named |
-| FC6 | digit carry/borrow bound | N16 | NDPC-J max carry; TDPC-E with `N=0` | `Σ A_i ≤ 200`, and the all-zero sentence |
-| FC7 | profile boundary | N17 | `N=1,2,3` hand count vs brute force | 1, 2, 5 with the profile named at the cut |
-| FC8 | exchange argument | N18 | all `w+s` equal; one block that only fits on top | a proved key, and the tie case declared free |
-| FC9 | LIS / prefix-max over values | N7, N20 | `h={3,3,1,2}` strictness | strict 3 vs non-strict 6, with the query inequality stated |
-| FC10 | rerooting | N13 | `M=10^9` non-prime | division must fail on the spot; prefix/suffix passes |
-| FC11 | SCC condensation | N14 | 2-cycle added to DPC-G; `T` tests; 1-vertex DAG | "condense or the problem is ill-defined" |
-| FC12 | state derivation (C2) | N1, fallback N12 | bare Frog 1 + "no stone twice"; bare tree independent set | the future's question, not a count and not a raw set |
-| FC13 | expectation ladder (E1–E4) | N10 | rungs 1→2→3, then the `E_A=7, E_B=5` gate | both equations written, `1` outside, self-term moved left |
-| FC14 | sentinel board (C5) | N3 | the four-part table before any arithmetic | INF + width, both init pairs, `nres` assignment, collision list |
-
-**Answer-integrity protocol (C4) applies to every row.** Signed notes are evidence; clicks are not. Any click that contradicts the note is re-asked as a prediction before scoring. Rows whose floor rests on a single click are FRAGILE and are re-verified at N3, N11b, N12b, N16.
-
----
-
-## [CARD_TRIAGE]
-
-66 cards, complete accounting: **40 CORE, 9 EDGE, 17 STRETCH** (26 DPC + 20 TDPC + 20 NDPC). A card has exactly one primary node; extra appearances are practice-only.
-Card ids are the codes from `sources/index.md`: `DPC-A` = #1 … `DPC-Z` = #26, `TDPC-A` = #27 … `TDPC-T` = #46, `NDPC-A` = #47 … `NDPC-T` = #66.
-
-### CORE — upstream of CF ~2000 (40)
-`DPC-A`→N1 · `DPC-B`→N7 (practice N1) · `DPC-C`→N6 · `DPC-D`→N4 (practice N3) · `DPC-E`→N19 · `DPC-F`→N2 · `DPC-G`→N14 · `DPC-H`→N1 · `DPC-I`→N10 · `DPC-J`→N10 · `DPC-K`→N9 · `DPC-L`→N9 · `DPC-M`→N7 · `DPC-N`→N8 · `DPC-O`→N11 · `DPC-P`→N12 · `DPC-Q`→N7 · `DPC-R`→N15 · `DPC-S`→N16 · `DPC-T`→N6 · `DPC-U`→N11 · `DPC-V`→N13 · `DPC-X`→N18 · `DPC-Y`→N5 · `TDPC-A`→N4 · `TDPC-B`→N9 (practice N8) · `TDPC-C`→N10 · `TDPC-D`→N10 · `TDPC-E`→N16 · `TDPC-F`→N7 · `TDPC-H`→N4 · `TDPC-K`→N7 · `TDPC-L`→N7 · `TDPC-P`→N12 · `NDPC-A`→N17 · `NDPC-B`→N14 · `NDPC-D`→N16 · `NDPC-E`→N15 · `NDPC-H`→N19 · `NDPC-J`→N16
-
-### EDGE — 2000–2200, opt-in after the CORE loop closes (9)
-- `DPC-W` Intervals → N20 (lazy range-add / range-max sweep)
-- `DPC-Z` Frog 3 → N20 (monotone CHT, `h_i` increasing)
-- `TDPC-I` Iwi → N8 (erasable-interval DP: the split rule must also model one outer removal; the editorial's `iiwiiwiwi` is the counterexample to the naive split)
-- `TDPC-J` Ball → N10 (bitmask expectation, ladder rung 5, parked until N11 is done)
-- `TDPC-T` Fibonacci → N15 (linear recurrence → polynomial mod)
-- `TDPC-G` Lexicographical → N16 (next-occurrence table + k-th construction; cap counts at `K`)
-- `TDPC-R` Graph → N14 (SCC condensation + two-path DP)
-- `NDPC-I` Update Positions → N6 (insertion DP with prefix/suffix counts)
-- `NDPC-C` String → **parked** (state = progress in each of 3 subsequences; a product automaton, no clean node)
-
-### STRETCH — above the ceiling, named so they can be refused (17)
-- `TDPC-M` House → N15 (subset path counts, matrix power over `R ≤ 16`)
-- `TDPC-N` Tree → N12 (edge-order counting, multinomial merge, all `N` roots)
-- `TDPC-O` String → N6 (insertion DP with equal-letter gap counts)
-- `TDPC-Q` Concatenation → N17 (last 7 bits + cut-position mask)
-- `TDPC-S` Grid → N17 (connectivity profile / plug DP)
-- `NDPC-F` Set → N12 (Cartesian tree + tree knapsack for every `K`)
-- `NDPC-G` Mouth → N20 (ear DP + segment tree)
-- `NDPC-K` Addition and Subtraction → N21 (FPS `log`/`exp` in `F_998244353`)
-- `NDPC-L` LCM → N21 (divisor zeta transform)
-- `NDPC-M` Numeral → N21 (SOS DP, string-as-number per subset)
-- `NDPC-N` Knapsack → N22 (unbounded + eventual greedy, `O(N² log N)` pruning)
-- `NDPC-O` Game → N22 (Alien pricing + concave max-plus convolution)
-- `NDPC-Q` Union of Intervals → N21 (evaluate at `0..M` + interpolation)
-- `NDPC-P`, `NDPC-R`, `NDPC-S`, `NDPC-T` → **parked** (digit DP on LIS + functional-graph orbit; `(4/3)^L` pattern strategies; planar dual min cut over characteristic 2; static top tree)
-
-**Accounting:** DPC 24 CORE + 2 EDGE = 26 · TDPC 10 CORE + 5 EDGE + 5 STRETCH = 20 · NDPC 6 CORE + 2 EDGE + 12 STRETCH = 20. Total 40 + 9 + 17 = 66.
-
-**Ordering rule (C6):** the student's own "unfamiliar CORE card" marking **orders** probes inside a node and across nodes; it never removes a probe. If an unfamiliar CORE card belongs to a node that is already passed, re-run that node's exit gate on *that card's* numbers rather than re-teaching the node.
-
----
-
-## [SOURCE_FLAWS_TO_USE]
-
-Carried forward from Stage 1 as F1–F18. Each line names the node where the flaw becomes a teaching beat. Do not "correct the article" in the abstract — the flaw is the lesson.
-
-| Flag | Type | Node | Teaching beat |
-|---|---|---|---|
-| **F1** | Inaccurate diagnosis | N1, N11 | The TSP `(k,l)` recurrence is not "missing optimal substructure" — it merges different visited sets. Numeric witness: `d(0,3)=d(2,3)=d(1,2)=1`, `d(0,1)=d(0,2)=d(1,3)=100`; the literal recurrence returns a "tour" of 4 (walk `0→3→2→3→0`) while the optimum is 103. State the test as "does the state determine the legal continuations?" |
-| **F2** | Bug | N2 | Forward LCS `relax(lcs[i+1][j])` at `i==n1` writes row `n1+1`; `j==n2` writes column `n2+1`; equal NUL terminators write the phantom diagonal. Silent with `lcs[1024][1024]`, a heap overflow with exact-size vectors. |
-| **F3** | Inaccurate | N3 | `memset(lcs,−63,…)` writes `0xC1C1C1C1 = −1_044_266_559`, not `−inf`; it survives only because real LCS values are `≥ 0`. Choose a sentinel with an invariant, not a habit. |
-| **F4** | Bug + missing step | N2 | Reconstruction has no `np <= s` bound and no `mink[s] < INF/2` check; `while (cp != 0)` walks the memset pattern when `s` is unreachable. |
-| **F5** | Unstated contract | N4 | Forward coins visits sources `0..s−1`; safe only because every edge increases weight. A 0-weight coin makes `s→s` matter. The comment "res is automatically zeroed" is false for a local array. |
-| **F6** | Inaccurate absolute | N10, N14 | "Memoisation works only in backward-style DP" is wrong. The real precondition: a state's value is final the first time it is computed (no later re-relaxation). Counterexample: a self-loop makes naive memoisation diverge; direction of code is irrelevant. |
-| **F7** | Hand-wavy | N17 | `Σ_F C(N,F)F_F = F_{2N} ≈ φ^{2N}/√5 = (1+φ)^N/√5` is true but not the count that matters. Pairs are `Σ_h C(N−h,h)2^{N−2h} ≈ (1+√2)^N = 2.414^N`; N=10 → 5,741 (article bound 15,127); N=40 → 1.75e15 (article 5.24e16). Count pairs, then choose `min(H,W)` as width. |
-| **F8** | Self-contradiction | N17, N15 | The profile section says "always store two layers" and then declares `res[M+1][1<<N]`. Treat the advice as the contract; the code is the naive version. |
-| **F9** | Hand-wavy | N11 | `3^N` is right (`Σ_s 2^{n−|s|} = 3^n`), but `O(3^N N^2.5)` is not derived — it substitutes `C(n,size)` for a loop that is not the one being counted. Honest bound `O(N²3^N)`; the practical speedup is the zero-check pruning. |
-| **F10** | Missing precondition | N8 (stretch note), N20 | Knuth needs the quadrangle inequality `w(a,c)+w(b,d) ≤ w(a,d)+w(b,c)` plus monotonicity, giving `mid[L][R−1] ≤ mid[L][R] ≤ mid[L+1][R]`. The code also writes `mid[L][R]=l` (typo) and allows `M=L, M=R`, relying on `INF+cost > INF` — which fails for negative costs. |
-| **F11** | Misleading | N19 | Rotation needs **dominance preserved by every continuation**, not one-coordinate monotonicity. Also: answer extraction becomes a scan over `R`, and the FPTAS error budget is `nK ≤ ε·V_max` with `K = ε·V_max/n`. |
-| **F12** | Missing topic | N10 | Expected value appears **zero** times in 970 lines, while five cards live there. The Sushi editorial's "multiply by n" hides the self-loop move to the left; without it there is no equation to solve. |
-| **F13** | Missing topics | N16, N7/N20, N18, N13, N14 | Digit/tight state, LIS, exchange arguments, rerooting and SCC are all absent. LIS is one sentence (L339–343) with no DP and no patience invariant. |
-| **F14** | Priority-distorting | N11 | "Subsets are much more popular" is dated. The real constraint is arithmetic: `N·2^N` and `3^N` must fit ~1e7–1e8. That number, not fashion, decides the technique. |
-| **F15** | Hand-wavy | N15 | D&C path recovery costs `O(T log N)` where `T` is one full DP pass (level `d` has `2^d` subproblems each covering `N/2^d` layers), not an additive `O(log N)`. No card here needs it. |
-| **F16** | Circular | N1, N11, N19 | "Equivalent states" is defined by the answer depending on them the same way. Operational test: identical set of legal continuations plus a merge operator the transitions respect (min/max need monotonicity; sum needs disjointness). |
-| **F17** | The most transferable omission | N4 (main), N18, N19 | Part 3's knapsack never explains why row-by-row is 0/1-safe, never shows the descending-`j` in-place form, never says the loop direction *is* the 0/1-vs-unbounded switch, and never distinguishes exact-`j` from at-most-`j` init. Those four facts decide DPC-D/X, TDPC-A/H, NDPC-N. |
-| **F18** | Bug (silent) | N3, N12 | BlockEnemy's `nres[0] = res[v][0] + res[s][0]` with two `1e9`s gives `2e9` (fits `int`), but the next merge of two such values overflows negative and then *wins* every `min`. One merge from a wrong answer: use `long long`, clamp, or `INF = 1e8`. |
-
----
-
-## [PROGRESS_PROTOCOL]
-
-**Reading discipline.** This file is architect-owned and read-only for the teacher. Open it at exactly two moments: when a node starts, and when a node ends. Take the eight fields of the node (anchor, cards, fracture, invariant, signature, boundary, first-contact, gate) into `course.md` in the teacher's own words. Never paste this file into `course.md`, never read it mid-explanation.
-
-**`course.md` owns the live state.** Active node, the current board, the last exit-gate result, the open question, completed cards, active misconceptions. This file holds no session log and no diary prose.
-
-**Advance condition.** A node is passed only by its exit gate, run on a **fresh** instance (C6). Gate failure → repeat the node with different numbers; record the failure mode (which field it broke: invariant, signature, boundary, or first-contact) in `course.md`. Two consecutive failures on the same field → demote the node from `FLOOR` to `BUILD` and re-open the predecessor edge from the DAG.
-
-**Answer integrity (C4), always.** On boundary/sentinel/precision items, the one-line reason comes before the click. A click contradicting the written note is re-asked as a prediction. The four FRAGILE floors (N3 bookkeeping, N11b canonicalisation, N12b transition set, N16 all-zero) are confirmed in situ; if one fails, the predecessor stays open.
-
-**First-contact discipline.** A node marked `FIRST-CONTACT` or `FROM-ZERO` is taught from zero even if the student's notes look right — the audit's clicks were unreliable twice. A node marked `FLOOR` gets one sitting and no derivation; if the student starts explaining the mechanism unprompted, accept it and move to the boundary drill.
-
-**Order.** Numeric order is the default, with two sanctioned deviations: N10 opens immediately after N3 (from-zero long pole), and N2/N8 are single boundary sittings. All other edges are dependencies, not suggestions: do not open N15 before N14's condensation gate, do not open N17 before N11's lowbit gate.
-
-**Stretch policy.** N20 (EDGE) opens only after every CORE gate N1–N19 is green, or at the student's explicit request with the risk stated. N21/N22 and the parked cards are name-only: they exist so the teacher can say "that is above the ceiling, here is its name" without pretending it is part of the course. No stretch node ever blocks the ~2000 line, and none is ever used as an exit gate.
-
-**Budget.** CORE floor nodes (N2, N4, N8, N14, N16-tight) ≤ 1 sitting each. N10 is allotted 2–4 sittings by design and is never compressed — it is the only horizon where the student starts from nothing. N1's state-derivation probe is the single highest-leverage 15 minutes in the course.
+- All 57 stored C++ solutions compile and pass every sample in the cards, except **DPC F** (multiple valid LCS strings), **DPC I / DPC J** (fixed-decimal printing versus the card's shorter sample output). Not bugs — the code can be trusted as ground truth.
+- **Six** claims in this guide were independently brute-force checked because they are load-bearing: DPC X's capacity bound, TDPC P's answer formula/index convention, TDPC G's recurrence, NDPC H's intermediate-value claim, TDPC A's inclusion of score 0, and the "one backward jump does not change Frog's optimum" claim used as a **non-variation** in Ch. 1. All hold.
+- At intake, no student code had been run in the Arena yet. Chapter 1 is the first compile.

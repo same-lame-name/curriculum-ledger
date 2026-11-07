@@ -1,4 +1,9 @@
 #include "bits/stdc++.h"
+#ifdef LOCAL
+#include "../../algorithms/debug.cpp"
+#else
+#define debug(...) ""
+#endif
 #define PRECISION(x) cout << fixed << setprecision(x)
 #define FAST_IO                                                                \
   ios::sync_with_stdio(false);                                                 \
@@ -14,40 +19,8 @@ template <class T> bool min_self(T &a, const T &b) {
   return b < a ? a = b, true : false;
 }
 typedef long long LL;
-const int INF = 1e9 + 7;
+const long long INF = 1e12 + 7;
 const double PI = acos(-1.0);
-const int MOD = 1e9 + 7;
-
-int add(int a, int b) { return ((1LL * a + b) % MOD + MOD) % MOD; }
-
-template <typename Head, typename... Tail> int add(Head h, Tail... t) {
-  return add(h, add(t...));
-}
-
-int sub(int a, int b) { return add(a, -b); }
-
-int mult(int a, int b) { return 1LL * a * b % MOD; }
-
-template <typename Head, typename... Tail> int mult(Head h, Tail... t) {
-  return mult(h, mult(t...));
-}
-
-int pow(int b, int p) {
-  int res = 1;
-  while (p) {
-    if (p & 1) {
-      res = mult(res, b);
-    }
-    p /= 2;
-    b = mult(b, b);
-  }
-  return res;
-}
-
-int inv(int x) { return pow(x, MOD - 2); }
-
-int divide(int a, int b) { return mult(a, inv(b)); }
-
 const double EPS = (1e-9);
 
 int main() {
@@ -56,29 +29,38 @@ int main() {
   freopen("input.txt", "r", stdin);
   freopen("output.txt", "w", stdout);
 #endif
-  int H, W;
-  cin >> H >> W;
+  int N, W;
+  cin >> N >> W;
 
-  vector<string> grid(H);
-  for (string &row : grid)
-    cin >> row;
+  vector<int> weights(N), value(N);
+  // since the value for one item can be atmost 1e9 and there could be 100
+  // items, we are working with 1e11 as maximum-value, needs long long
+  vector<vector<long long>> dp(N + 1, vector<long long>(W + 1, -INF));
 
-  vector<vector<int>> dp(H + 1, vector<int>(W + 1, 0));
-  dp[0][0] = 1;
+  for (int idx = 0; idx < N; ++idx) {
+    cin >> weights[idx] >> value[idx];
+  }
 
-  for (int r = 0; r < H; ++r) {
-    for (int c = 0; c < W; ++c) {
-      if (grid[r][c] == '#')
-        continue;
-      if (r - 1 >= 0)
-        dp[r][c] = add(dp[r][c], dp[r - 1][c]);
-      if (c - 1 >= 0)
-        dp[r][c] = add(dp[r][c], dp[r][c - 1]);
+  // If there are no items to rob, with the bag of capacity 'w', the max-value
+  // one can loot is zero.
+  for (int w = 0; w <= W; ++w) {
+    dp[0][w] = 0;
+  }
+
+  for (int item = 0, curr_w, curr_v; item < N; ++item) {
+    curr_v = value[item], curr_w = weights[item];
+    for (int w = 0; w <= W; ++w) {
+      // Don't pick the item.
+      max_self(dp[item + 1][w], dp[item][w]);
+
+      // Pick the item only if the bag capacity allows it.
+      if (w + curr_w <= W) {
+        max_self(dp[item + 1][w + curr_w], dp[item][w] + curr_v);
+      }
     }
   }
 
-  cout << dp[H - 1][W - 1] << '\n';
-
+  cout << dp[N][W] << '\n';
 #ifdef LOCAL
   cout << endl
        << "finished in " << clock() * 1.0 / CLOCKS_PER_SEC << " sec" << endl;

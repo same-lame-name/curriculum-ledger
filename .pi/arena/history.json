@@ -1,0 +1,30 @@
+[
+  {
+    "session_id": "arena_1793820629623",
+    "course_slug": "dp",
+    "purpose": "drill",
+    "grading_policy": "study",
+    "k_factor": 16,
+    "problem_id": "dpc_e",
+    "catalog_id": "dpc_e",
+    "title": "Knapsack 2",
+    "url": "https://atcoder.jp/contests/dp/tasks/dp_e",
+    "platform": "AtCoder",
+    "difficulty": 1500,
+    "domain": "Dynamic Programming",
+    "verdict": "AC",
+    "pending_verdict": false,
+    "duration_seconds": 1346,
+    "budget_seconds": 2520,
+    "overtime_seconds": 0,
+    "wrong_attempts": 0,
+    "hints_used": 0,
+    "rated": true,
+    "rating_before": 1200,
+    "rating_after": 1214,
+    "rating_delta": 14,
+    "reflection": "The time complexity is O(N * N * max_v). I had to reason the transitions well, the assert on the val + v <= MAX_V was convincing.",
+    "timestamp": "2026-11-04T19:55:27Z",
+    "past_attempts": []
+  }
+]

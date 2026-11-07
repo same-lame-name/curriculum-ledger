@@ -353,6 +353,16 @@ export default function mdLog(pi: ExtensionAPI) {
 			const block = questionCallout("Question", q, c, opts);
 			return withLock(() => appendToFile(block));
 		},
+		logArenaStart: (title: string, bodyLines: string[]) => {
+			if (!logFile) return Promise.resolve();
+			const block = callout("info", unescapeToolText(title || "Arena Opened"), bodyLines);
+			return withLock(() => appendToFile(block));
+		},
+		logArenaSession: (title: string, bodyLines: string[]) => {
+			if (!logFile) return Promise.resolve();
+			const block = callout("example", unescapeToolText(title || "Arena Session"), bodyLines);
+			return withLock(() => appendToFile(block));
+		},
 	};
 
 	pi.registerCommand("md-log", {
@@ -445,6 +455,17 @@ export default function mdLog(pi: ExtensionAPI) {
 			}
 
 			if (msg.role === "toolResult") {
+				if (msg.toolName === "arena_run") {
+					const d = msg.details;
+					if (!d || d.status === "unavailable") continue;
+					if (Array.isArray(d.startCalloutLines) && d.startCalloutLines.length > 0) {
+						blocks.push(callout("info", unescapeToolText(d.startCalloutTitle || `Arena Opened — ${d.title || "Session"}`), d.startCalloutLines));
+					}
+					if (Array.isArray(d.endCalloutLines) && d.endCalloutLines.length > 0) {
+						blocks.push(callout("example", unescapeToolText(d.endCalloutTitle || `Arena — ${d.title || "Session"}`), d.endCalloutLines));
+					}
+					continue;
+				}
 				if (!QA_TOOLS.has(msg.toolName)) continue;
 				if (msg.details?.status === "unavailable") continue;
 				const tc = toolCallArgs.get(msg.toolCallId);

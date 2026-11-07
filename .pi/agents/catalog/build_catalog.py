@@ -2,9 +2,10 @@
 """build_catalog.py — builds unified catalog.json, CSV stores, and HTML/MD views.
 
 Merges:
-1. progvar.fun problem sets (sources/progvar/nav.json)
+1. progvar.fun problem sets (sources/progvar/nav.json & sets.csv)
 2. Ultimate Topic List (sources/utl via utl_load.py)
 3. Topic mapping (utl_to_progvar.csv)
+4. Pre-baked CF-scale problem difficulties (sources/official_ratings.json + catalog tier calibration)
 
 Outputs:
 - catalog.json
@@ -20,6 +21,7 @@ from collections import defaultdict
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT_PV = os.path.join(HERE, "sources", "progvar")
 ROOT_UTL = os.path.join(HERE, "sources", "utl")
+OFFICIAL_RATINGS_PATH = os.path.join(HERE, "sources", "official_ratings.json")
 
 sys.path.insert(0, ROOT_UTL)
 import utl_load
@@ -36,27 +38,149 @@ HOSTS = {
     "yukicoder.me": "Yukicoder", "vjudge.net": "VJudge"
 }
 
+CF_URL_RE = re.compile(
+    r"codeforces\.com/(?:problemset/problem/|contest/|gym/)(\d+)/problem/([A-Za-z0-9]+)"
+    r"|codeforces\.com/problemset/problem/(\d+)/([A-Za-z0-9]+)",
+    re.I,
+)
+AC_URL_RE = re.compile(r"atcoder\.jp/contests/[^/]+/tasks/([A-Za-z0-9_]+)", re.I)
+CSES_URL_RE = re.compile(r"cses\.fi/problemset/task/(\d+)", re.I)
+SPOJ_URL_RE = re.compile(r"spoj\.com/problems/([A-Za-z0-9_]+)", re.I)
+CODECHEF_URL_RE = re.compile(r"codechef\.com/(?:[^/]+/)?problems/([A-Za-z0-9_]+)", re.I)
+KATTIS_URL_RE = re.compile(r"kattis\.com/problems/([A-Za-z0-9_-]+)", re.I)
+LEETCODE_URL_RE = re.compile(r"leetcode\.com/problems/([A-Za-z0-9_-]+)", re.I)
+USACO_URL_RE = re.compile(r"cp_id=(\d+)", re.I)
+
+# Progvar track_id -> baseline CF-equivalent difficulty
+PV_TRACK_BASE = {
+    1: 950,    # Basics
+    2: 1350,   # Intermediate
+    3: 1700,   # Advanced Data Structures
+    4: 1850,   # Advanced Algorithms
+    5: 1950,   # Advanced Mathematics
+    8: 1600,   # Experimental
+    12: 900,   # Preliminaries
+    15: 1050,  # 4-Problem ABC
+    16: 1650,  # ARC
+    18: 2200,  # ICPC World Finals
+    24: 1200,  # 6-Problem ABC
+    25: 1500,  # CF Educational Rounds
+    26: 1300,  # 8-Problem ABC
+    35: 1050,  # Beginner Training
+    36: 1450,  # Intermediate Training
+    37: 1450,  # Intermediate Training
+}
+
+# UTL topic difficulty (0..4) -> baseline CF-equivalent difficulty
+UTL_TOPIC_BASE = {
+    0: 850,    # Basics
+    1: 1150,   # Easy
+    2: 1550,   # Medium
+    3: 1900,   # Hard
+    4: 2300,   # Advanced
+}
+
+# UTL problem difficulty (1..4) -> offset from topic baseline
+UTL_PROB_OFFSET = {
+    1: -150,
+    2: 0,
+    3: 150,
+    4: 300,
+}
+
+
 def norm_url(url):
     u = (url or "").strip().lower()
     u = re.sub(r"^https?://(www\.)?", "", u)
     u = re.sub(r"/+$", "", u)
     return u
 
+
 def detect_platform(url):
     m = re.match(r"https?://([^/]+)/", (url or "") + "/")
     host = (m.group(1) if m else "").lower()
     for h, n in HOSTS.items():
-        if host.endswith(h): return n
+        if host.endswith(h):
+            return n
     return host or "Other"
+
+
+def derive_problem_id(url, name, utl_pid=None):
+    """Derive a clean, deterministic, C++-filename-safe problem ID stem."""
+    u = url or ""
+    m = CF_URL_RE.search(u)
+    if m:
+        cid = m.group(1) or m.group(3)
+        idx = (m.group(2) or m.group(4)).upper()
+        return f"cf_{cid}{idx}"
+    m = AC_URL_RE.search(u)
+    if m:
+        return m.group(1).lower()
+    m = CSES_URL_RE.search(u)
+    if m:
+        return f"cses_{m.group(1)}"
+    m = SPOJ_URL_RE.search(u)
+    if m:
+        return f"spoj_{m.group(1).lower()}"
+    m = CODECHEF_URL_RE.search(u)
+    if m:
+        return f"cc_{m.group(1).lower()}"
+    m = KATTIS_URL_RE.search(u)
+    if m:
+        return f"kattis_{m.group(1).lower().replace('-', '_')}"
+    m = LEETCODE_URL_RE.search(u)
+    if m:
+        return f"lc_{m.group(1).lower().replace('-', '_')}"
+    m = USACO_URL_RE.search(u)
+    if m:
+        return f"usaco_{m.group(1)}"
+    if utl_pid:
+        clean = re.sub(r"[^a-zA-Z0-9_]", "_", str(utl_pid)).strip("_").lower()
+        if clean:
+            return clean
+    slug = re.sub(r"[^a-zA-Z0-9]+", "_", (name or "prob").lower()).strip("_")
+    return slug[:32] or "prob"
+
+
+def round50(val):
+    return int(max(800, min(3200, round(val / 50.0) * 50)))
+
 
 def main():
     print("Loading progvar data...")
     nav = json.load(open(os.path.join(ROOT_PV, "nav.json"), encoding="utf-8"))
-    
+
+    pv_set_tracks = {}
+    sets_csv_path = os.path.join(ROOT_PV, "sets.csv")
+    if os.path.exists(sets_csv_path):
+        with open(sets_csv_path, encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                try:
+                    sid = int(r["set_id"])
+                    tid = int(r["track_id"]) if r.get("track_id") else 2
+                    pv_set_tracks[sid] = tid
+                except Exception:
+                    pass
+
+    print("Loading official CF/AC ratings...")
+    official_cf = {}
+    official_ac = {}
+    if os.path.exists(OFFICIAL_RATINGS_PATH):
+        off = json.load(open(OFFICIAL_RATINGS_PATH, encoding="utf-8"))
+        official_cf = off.get("cf", {})
+        official_ac = off.get("ac", {})
+
     print("Loading UTL data...")
     utl = utl_load.load_all(ROOT_UTL)
     utl_info = utl["topicInfo"]
     utl_problems = utl["topicListProblems"]
+
+    # Map UTL topic_id -> topic difficulty (0..4)
+    utl_topic_diff = {}
+    for cat in utl.get("topicList", []):
+        for sub in cat.get("sub_categories", []):
+            for t in sub.get("topics", []):
+                utl_topic_diff[t["topic_id"]] = int(t.get("difficulty") or 0)
 
     print("Loading mapping CSV...")
     mapping_path = os.path.join(HERE, "utl_to_progvar.csv")
@@ -78,7 +202,7 @@ def main():
     # URL sets for cross-referencing [pv] and [utl]
     pv_url_to_probs = defaultdict(list)
     CONTEST_RE = re.compile(r"^(ABC|ARC|AGC)\d+|ICPC World Finals|Educational Codeforces Round")
-    
+
     all_pv_sets = []
     for t in nav["topics"]:
         for s in t["sets"]:
@@ -102,12 +226,73 @@ def main():
         if nu:
             utl_url_to_probs[nu].append((pid, p))
 
+    def compute_problem_difficulty(p_url, pv_set_id=None, pv_idx=0, pv_total=1, utl_prob=None, utl_tid=None):
+        """Return (difficulty_int, difficulty_source_str)."""
+        u = p_url or ""
+        # 1. Official Codeforces rating
+        m_cf = CF_URL_RE.search(u)
+        if m_cf:
+            cid = m_cf.group(1) or m_cf.group(3)
+            idx = (m_cf.group(2) or m_cf.group(4)).upper()
+            code = f"{cid}{idx}"
+            if code in official_cf:
+                return int(official_cf[code]), "cf_official"
+
+        # 2. Converted AtCoder IRT difficulty
+        m_ac = AC_URL_RE.search(u)
+        if m_ac:
+            task_id = m_ac.group(1).lower()
+            if task_id in official_ac:
+                return int(official_ac[task_id]), "ac_converted"
+            if re.match(r"^abc\d+_a$", task_id):
+                return 800, "ac_converted"
+            if re.match(r"^abc\d+_b$", task_id):
+                return 850, "ac_converted"
+            if re.match(r"^abc\d+_c$", task_id):
+                return 1000, "ac_converted"
+
+        # 3. Deterministic Catalog Tier calibration (UTL + Progvar)
+        nu = norm_url(u)
+        if utl_prob is None and nu in utl_url_to_probs:
+            utl_prob = utl_url_to_probs[nu][0][1]
+            if not utl_tid:
+                tlist = utl_prob.get("topics") or []
+                if tlist:
+                    utl_tid = tlist[0]
+
+        est_list = []
+
+        if utl_prob is not None:
+            raw_pdiff = utl_prob.get("difficulty")
+            try:
+                pdiff_int = int(raw_pdiff) if raw_pdiff is not None else 2
+            except Exception:
+                pdiff_int = 2
+            if pdiff_int >= 800:
+                est_list.append(pdiff_int)
+            else:
+                tdiff = utl_topic_diff.get(utl_tid, 1) if utl_tid else 1
+                base = UTL_TOPIC_BASE.get(tdiff, 1300)
+                offset = UTL_PROB_OFFSET.get(pdiff_int, 0)
+                est_list.append(base + offset)
+
+        if pv_set_id is not None:
+            track_id = pv_set_tracks.get(pv_set_id, 2)
+            base = PV_TRACK_BASE.get(track_id, 1350)
+            frac = (pv_idx / max(1, pv_total - 1)) if pv_total > 1 else 0.3
+            est_list.append(base + int(round(frac * 300)))
+
+        if est_list:
+            avg_est = sum(est_list) / len(est_list)
+            return round50(avg_est), "catalog_tier"
+
+        return 1300, "catalog_tier"
+
     print(f"Total unique Progvar URLs: {len(pv_url_to_probs)}")
     print(f"Total unique UTL URLs: {len(utl_url_to_probs)}")
     shared_urls = set(pv_url_to_probs.keys()) & set(utl_url_to_probs.keys())
     print(f"Shared URLs across sources: {len(shared_urls)}")
 
-    # Prepare catalog structure
     canonical_domains = [
         "Dynamic Programming", "Data Structures", "Math", "Graphs",
         "Strings", "Geometry", "Implementation", "Algorithmic Techniques (except DP)",
@@ -125,11 +310,11 @@ def main():
             "unique_problems": 0,
             "shared_problems": len(shared_urls),
             "total_resources": 0,
-            "total_templates": 0
+            "total_templates": 0,
+            "difficulty_sources": {"cf_official": 0, "ac_converted": 0, "catalog_tier": 0}
         }
     }
 
-    # Group UTL topics by absorbed home_set_id
     absorbed_by_set = defaultdict(list)
     standalone_utl = []
     dropped_count = 0
@@ -149,13 +334,14 @@ def main():
     print(f"Dropped UTL topics: {dropped_count}")
 
     seen_problem_urls = set()
+    diff_source_counts = defaultdict(int)
 
     # 1. Build Progvar Buckets (Concept + Contest)
     for dom, s, is_contest in all_pv_sets:
         sid = s["set_id"]
         title = s["title"]
         url = "https://progvar.fun" + s["url"]
-        
+
         b_type = "contest" if is_contest else "progvar_concept"
         bucket = {
             "bucket_id": f"pv_{sid}",
@@ -170,24 +356,37 @@ def main():
             "templates": []
         }
 
-        # Add Progvar's own problems
-        for p in s["problems"]:
+        pv_probs = s["problems"]
+        n_pv = len(pv_probs)
+        for idx_p, p in enumerate(pv_probs):
             p_url = p.get("url", "")
             nu = norm_url(p_url)
-            if nu: seen_problem_urls.add(nu)
+            if nu:
+                seen_problem_urls.add(nu)
             is_in_utl = nu in utl_url_to_probs
             source_tag = "[pv+utl]" if is_in_utl else "[pv]"
-            
-            # If in UTL, check if starred
+
             is_starred = False
+            utl_pid_hint = None
+            utl_prob_obj = None
             if is_in_utl:
                 is_starred = any(up[1].get("is_starred", False) for up in utl_url_to_probs[nu])
+                utl_pid_hint, utl_prob_obj = utl_url_to_probs[nu][0]
+
+            diff_val, diff_src = compute_problem_difficulty(
+                p_url, pv_set_id=sid, pv_idx=idx_p, pv_total=n_pv, utl_prob=utl_prob_obj
+            )
+            diff_source_counts[diff_src] += 1
+            prob_id = derive_problem_id(p_url, p["name"], utl_pid=utl_pid_hint)
 
             bucket["problems"].append({
+                "id": prob_id,
                 "name": p["name"],
                 "number": p["number"],
                 "url": p_url,
                 "platform": detect_platform(p_url),
+                "difficulty": diff_val,
+                "difficulty_source": diff_src,
                 "source": source_tag,
                 "is_starred": is_starred,
                 "solved_count": p.get("solved_count", 0),
@@ -195,7 +394,6 @@ def main():
                 "origin": "progvar"
             })
 
-        # Add absorbed UTL topics & their backfill problems
         absorbed = absorbed_by_set.get(sid, [])
         for m in absorbed:
             tid = m["utl_topic_id"]
@@ -207,7 +405,6 @@ def main():
                 "n_reading": int(m["n_reading"])
             })
 
-            # Add UTL resources & templates for absorbed topic
             info = utl_info.get(tid, {})
             for r in info.get("resources", []):
                 bucket["resources"].append({
@@ -226,16 +423,13 @@ def main():
                     "url": tmpl
                 })
 
-            # Add UTL backfill problems for this absorbed topic
-            # Only include if URL not already in bucket['problems']
             existing_urls = {norm_url(p["url"]) for p in bucket["problems"]}
             utl_pids = topic_to_utl_pids.get(tid, [])
-            
-            # Sort utl problems: starred first, then solve_count desc
-            candidate_probs = [utl_problems[pid] for pid in utl_pids if pid in utl_problems]
-            candidate_probs.sort(key=lambda x: (not x.get("is_starred", False), -x.get("solve_count", 0)))
 
-            for up in candidate_probs:
+            candidate_probs = [(pid, utl_problems[pid]) for pid in utl_pids if pid in utl_problems]
+            candidate_probs.sort(key=lambda x: (not x[1].get("is_starred", False), -x[1].get("solve_count", 0)))
+
+            for up_pid, up in candidate_probs:
                 up_url = up.get("problem_url", "")
                 nu = norm_url(up_url)
                 if not nu or nu in existing_urls:
@@ -243,12 +437,21 @@ def main():
                 seen_problem_urls.add(nu)
                 is_in_pv = nu in pv_url_to_probs
                 source_tag = "[pv+utl]" if is_in_pv else "[utl]"
-                
+
+                diff_val, diff_src = compute_problem_difficulty(
+                    up_url, pv_set_id=sid, utl_prob=up, utl_tid=tid
+                )
+                diff_source_counts[diff_src] += 1
+                prob_id = derive_problem_id(up_url, up.get("problem_title", ""), utl_pid=up_pid)
+
                 bucket["problems"].append({
+                    "id": prob_id,
                     "name": up.get("problem_title", ""),
                     "number": len(bucket["problems"]) + 1,
                     "url": up_url,
                     "platform": detect_platform(up_url),
+                    "difficulty": diff_val,
+                    "difficulty_source": diff_src,
                     "source": source_tag,
                     "is_starred": up.get("is_starred", False),
                     "solved_count": up.get("solve_count", 0),
@@ -282,7 +485,6 @@ def main():
             "templates": []
         }
 
-        # Resources & templates
         for r in info.get("resources", []):
             bucket["resources"].append({
                 "topic_id": tid,
@@ -300,23 +502,32 @@ def main():
                 "url": tmpl
             })
 
-        # Problems
         utl_pids = topic_to_utl_pids.get(tid, [])
-        candidate_probs = [utl_problems[pid] for pid in utl_pids if pid in utl_problems]
-        candidate_probs.sort(key=lambda x: (not x.get("is_starred", False), -x.get("solve_count", 0)))
+        candidate_probs = [(pid, utl_problems[pid]) for pid in utl_pids if pid in utl_problems]
+        candidate_probs.sort(key=lambda x: (not x[1].get("is_starred", False), -x[1].get("solve_count", 0)))
 
-        for i, up in enumerate(candidate_probs, 1):
+        for i, (up_pid, up) in enumerate(candidate_probs, 1):
             up_url = up.get("problem_url", "")
             nu = norm_url(up_url)
-            if nu: seen_problem_urls.add(nu)
+            if nu:
+                seen_problem_urls.add(nu)
             is_in_pv = nu in pv_url_to_probs
             source_tag = "[pv+utl]" if is_in_pv else "[utl]"
 
+            diff_val, diff_src = compute_problem_difficulty(
+                up_url, pv_set_id=None, utl_prob=up, utl_tid=tid
+            )
+            diff_source_counts[diff_src] += 1
+            prob_id = derive_problem_id(up_url, up.get("problem_title", ""), utl_pid=up_pid)
+
             bucket["problems"].append({
+                "id": prob_id,
                 "name": up.get("problem_title", ""),
                 "number": i,
                 "url": up_url,
                 "platform": detect_platform(up_url),
+                "difficulty": diff_val,
+                "difficulty_source": diff_src,
                 "source": source_tag,
                 "is_starred": up.get("is_starred", False),
                 "solved_count": up.get("solve_count", 0),
@@ -326,15 +537,13 @@ def main():
 
         catalog["buckets"].append(bucket)
 
-    # Sort resources in every bucket: starred first
     for b in catalog["buckets"]:
         b["resources"].sort(key=lambda r: not r.get("is_starred", False))
 
-    # Calculate overall stats
     total_probs = sum(len(b["problems"]) for b in catalog["buckets"])
     total_res = sum(len(b["resources"]) for b in catalog["buckets"])
     total_tmpl = sum(len(b["templates"]) for b in catalog["buckets"])
-    
+
     catalog["stats"]["total_buckets"] = len(catalog["buckets"])
     catalog["stats"]["progvar_concept_buckets"] = sum(1 for b in catalog["buckets"] if b["type"] == "progvar_concept")
     catalog["stats"]["standalone_utl_buckets"] = sum(1 for b in catalog["buckets"] if b["type"] == "standalone_utl")
@@ -343,26 +552,23 @@ def main():
     catalog["stats"]["unique_problems"] = len(seen_problem_urls)
     catalog["stats"]["total_resources"] = total_res
     catalog["stats"]["total_templates"] = total_tmpl
+    catalog["stats"]["difficulty_sources"] = dict(diff_source_counts)
 
     print("\nCatalog Stats:")
     for k, v in catalog["stats"].items():
         print(f"  {k}: {v}")
 
-    # Write catalog.json
     cat_json_path = os.path.join(HERE, "catalog.json")
     print(f"\nWriting {cat_json_path}...")
-    with open(cat_json_path, "w", encoding="utf-8") as f:
+    with open(cat_json_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(catalog, f, ensure_ascii=False, indent=1)
 
-    # Write CSV files
     write_csv_stores(catalog)
-
-    # Render HTML and Markdown views
     render_inventory_views(catalog)
     print("Done!")
 
+
 def write_csv_stores(catalog):
-    # 1. catalog_buckets.csv
     b_path = os.path.join(HERE, "catalog_buckets.csv")
     with open(b_path, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=[
@@ -382,11 +588,11 @@ def write_csv_stores(catalog):
                 "absorbed_topics": abs_str
             })
 
-    # 2. catalog_problems.csv
     p_path = os.path.join(HERE, "catalog_problems.csv")
     with open(p_path, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=[
-            "bucket_id", "bucket_title", "domain", "number", "name", "url", "platform", "source", "is_starred", "solved_count", "dacu"
+            "bucket_id", "bucket_title", "domain", "number", "id", "name", "url",
+            "platform", "difficulty", "difficulty_source", "source", "is_starred", "solved_count", "dacu"
         ])
         w.writeheader()
         for b in catalog["buckets"]:
@@ -396,16 +602,18 @@ def write_csv_stores(catalog):
                     "bucket_title": b["title"],
                     "domain": b["domain"],
                     "number": p["number"],
+                    "id": p.get("id", ""),
                     "name": p["name"],
                     "url": p["url"],
                     "platform": p["platform"],
+                    "difficulty": p.get("difficulty", 1200),
+                    "difficulty_source": p.get("difficulty_source", "catalog_tier"),
                     "source": p["source"],
                     "is_starred": "yes" if p["is_starred"] else "no",
                     "solved_count": p["solved_count"],
                     "dacu": p["dacu"]
                 })
 
-    # 3. catalog_resources.csv
     r_path = os.path.join(HERE, "catalog_resources.csv")
     with open(r_path, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=[
@@ -427,8 +635,8 @@ def write_csv_stores(catalog):
                     "comment": r["comment"]
                 })
 
+
 def render_inventory_views(catalog):
-    # 1. inventory.md
     md_path = os.path.join(HERE, "inventory.md")
     print(f"Rendering {md_path}...")
     lines = [
@@ -441,20 +649,21 @@ def render_inventory_views(catalog):
         ""
     ]
 
-    # Group buckets by domain
     by_domain = defaultdict(list)
     for b in catalog["buckets"]:
         by_domain[b["domain"]].append(b)
 
     for dom in catalog["domains"]:
-        if dom not in by_domain: continue
+        if dom not in by_domain:
+            continue
         slug = dom.lower().replace(" ", "-").replace("(", "").replace(")", "")
         lines.append(f"- [{dom}](#{slug}) ({len(by_domain[dom])} buckets, {sum(len(b['problems']) for b in by_domain[dom])} problems)")
 
     lines.append("")
 
     for dom in catalog["domains"]:
-        if dom not in by_domain: continue
+        if dom not in by_domain:
+            continue
         buckets = by_domain[dom]
         lines.append(f"## {dom}")
         lines.append("")
@@ -472,12 +681,12 @@ def render_inventory_views(catalog):
                 lines.append(f"**Absorbed UTL Topics:** {abs_names}\n")
 
             if b["problems"]:
-                lines.append("| # | Source | Problem | Platform | DACU / Solves |")
-                lines.append("|---|:---:|---|---|:---:|")
+                lines.append("| # | Source | ID | Problem | Platform | Diff (CF) | DACU / Solves |")
+                lines.append("|---|:---:|---|---|---|:---:|:---:|")
                 for p in b["problems"]:
                     star = " ★" if p["is_starred"] else ""
                     solves = f"dacu={p['dacu']}" if p["dacu"] else f"{p['solved_count']:,}"
-                    lines.append(f"| {p['number']} | `{p['source']}` | [{p['name']}]({p['url']}){star} | {p['platform']} | {solves} |")
+                    lines.append(f"| {p['number']} | `{p['source']}` | `{p.get('id', '')}` | [{p['name']}]({p['url']}){star} | {p['platform']} | {p.get('difficulty', 1200)} | {solves} |")
                 lines.append("")
 
             if b["resources"]:
@@ -496,13 +705,13 @@ def render_inventory_views(catalog):
                     lines.append(f"- [{tname}]({t['url']})")
                 lines.append("\n</details>\n")
 
-    with open(md_path, "w", encoding="utf-8") as f:
+    with open(md_path, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(lines))
 
-    # 2. inventory.html
     html_path = os.path.join(HERE, "inventory.html")
     print(f"Rendering {html_path}...")
     render_html(catalog, html_path)
+
 
 def render_html(catalog, out_path):
     data_js = json.dumps(catalog, ensure_ascii=False)
@@ -570,7 +779,6 @@ function init() {{
   document.getElementById('filter-input').addEventListener('input', (e) => {{
     renderSidebar(e.target.value.toLowerCase().trim());
   }});
-  // Select first bucket by default
   if (CATALOG.buckets.length > 0) {{
     selectBucket(CATALOG.buckets[0].bucket_id);
   }}
@@ -579,7 +787,7 @@ function init() {{
 function renderSidebar(query) {{
   const list = document.getElementById('domains-list');
   list.innerHTML = '';
-  
+
   const byDomain = {{}};
   CATALOG.domains.forEach(d => byDomain[d] = []);
   CATALOG.buckets.forEach(b => {{
@@ -592,7 +800,7 @@ function renderSidebar(query) {{
   CATALOG.domains.forEach(d => {{
     const buckets = byDomain[d];
     if (!buckets || buckets.length === 0) return;
-    
+
     const h = document.createElement('div');
     h.className = 'domain-header';
     h.textContent = d + ' (' + buckets.length + ')';
@@ -635,6 +843,7 @@ function selectBucket(id) {{
             <th style="width: 90px;">Source</th>
             <th>Problem Name</th>
             <th style="width: 130px;">Platform</th>
+            <th style="width: 100px;">Diff (CF)</th>
             <th style="width: 120px;">Solvers</th>
           </tr>
         </thead>
@@ -646,8 +855,9 @@ function selectBucket(id) {{
             return `<tr>
               <td style="color: var(--muted);">${{p.number}}</td>
               <td><span class="badge ${{tagClass}}">${{p.source}}</span></td>
-              <td>${{star}}<a href="${{p.url}}" target="_blank">${{p.name}}</a></td>
+              <td>${{star}}<a href="${{p.url}}" target="_blank">${{p.name}}</a> <span style="color: var(--muted); font-size: 11px;">(${{p.id || ''}})</span></td>
               <td>${{p.platform}}</td>
+              <td><span class="badge">${{p.difficulty || 1200}}</span></td>
               <td style="color: var(--muted); font-size: 12px;">${{solvers}}</td>
             </tr>`;
           }}).join('')}}
@@ -717,8 +927,9 @@ init();
 </script>
 </body>
 </html>"""
-    with open(out_path, "w", encoding="utf-8") as f:
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(html_content)
+
 
 if __name__ == "__main__":
     main()

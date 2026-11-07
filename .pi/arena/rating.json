@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "global": {
+    "rating": 1214,
+    "tier": "Pupil (CF 1200-1399)",
+    "max_rating": 1214,
+    "rated_solved": 1,
+    "rated_attempted": 1,
+    "unrated_solved": 0,
+    "streak": 1,
+    "last_updated": "2026-11-04T19:55:27Z"
+  },
+  "domains": {
+    "Dynamic Programming": {
+      "solved": 1,
+      "attempted": 1,
+      "avg_solved_difficulty": 1500,
+      "max_solved_difficulty": 1500,
+      "recent_failures": []
+    },
+    "Data Structures": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Math": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Graphs": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Strings": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Geometry": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Implementation": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    },
+    "Algorithmic Techniques (except DP)": {
+      "solved": 0,
+      "attempted": 0,
+      "avg_solved_difficulty": 0,
+      "max_solved_difficulty": 0,
+      "recent_failures": []
+    }
+  }
+}

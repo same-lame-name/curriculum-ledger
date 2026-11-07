@@ -17,6 +17,7 @@ This is a personal system I built for myself, shared as-is. Built as a pi config
 - `skills/practice/` — standalone deliberate practice gym for curated competitive programming problems, Socratic hint ladders, and adversarial grading
 - `skills/visualize/` — adds a correct, minimal diagram to a lesson when an idea is clearer as a picture (teacher verifies every PNG before embedding)
 - `extensions/learn.ts` — `/course new <slug>`, `/course resume [slug]`, `/course list`: course workspace scaffolding and session log linking
+- `extensions/arena.ts` — `arena_run`, `arena_ledger`, and `/arena`: Competitive Programming Arena bridge to Neovim (`~/playground/contests/practice`), CF-equivalent rating & domain ledger, sample runner, progressive hints, and inline attempt diffing
 - `extensions/ask-user-question.ts` — the agent asks you questions through a UI popup
 - `extensions/quiz.ts` — graded questions with instant feedback (✓/✗, correct answer, explanation)
 - `extensions/md-log.ts` — mirrors the session into the course's Obsidian session log; unescapes tool text and recovers JSON control-character collisions
