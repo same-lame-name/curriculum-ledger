@@ -1,6 +1,6 @@
 -- ~/.config/nvim/lua/competitive/arena/dashboard.lua
 -- Minimal 2-Tab Floating Dashboard for the Competitive Programming Arena:
---   [1] Session Queue     — Staged problem queue, blind-mode masking, & quick actions
+--   [1] Queue             — Staged problem queue, blind-mode masking, & quick actions
 --   [2] Standing & Graph  — Global CF-equivalent rating, ASCII rating chart, & 8-domain breakdown
 --
 -- (Problem Statement, Constraints, Samples, and Unlocked Hints live exclusively
@@ -21,6 +21,7 @@ local state = {
 	active_problem_row = nil,
 	focused_pid = nil,
 	cached_standing = nil,
+	graph_zoom = "recent", -- "recent" (last 30) | "full" (last 100)
 }
 
 function M.is_open()
@@ -87,26 +88,48 @@ end
 local function append_action_footer(lines, highlights, rule_w)
 	table.insert(lines, "  " .. string.rep("─", rule_w))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
-	table.insert(
-		lines,
-		"  [Enter/a] Accept & Edit   [c] Problem Card   [t] Test Samples   [h] Hint   [o] Open URL"
-	)
-	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
-	table.insert(
-		lines,
-		"  [v] Record Verdict / Submit   [1/2/Tab] Switch Tab   [x] End Session Early   [q] Hide"
-	)
-	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
+
+	local actions = {
+		"[Enter/a] Accept",
+		"[c] Card",
+		"[t] Samples",
+		"[J] Judge",
+		"[p] Approach",
+		"[h] Hint",
+		"[v] Verdict",
+		"[o] URL",
+		"[1/2/Tab] Switch Tab",
+		"[x] End Early",
+		"[q] Hide",
+	}
+
+	local cur = "  "
+	for _, act in ipairs(actions) do
+		local cand = (cur == "  ") and ("  " .. act) or (cur .. "  " .. act)
+		if vim.fn.strdisplaywidth(cand) > rule_w and cur ~= "  " then
+			table.insert(lines, cur)
+			table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
+			cur = "  " .. act
+		else
+			cur = cand
+		end
+	end
+	if cur ~= "  " then
+		table.insert(lines, cur)
+		table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
+	end
 end
 
--- ── Tab 1: Session Queue Renderer ───────────────────────────────────────────
+-- ── Tab 1: Queue Renderer ───────────────────────────────────────────────────
 
 local function render_queue_tab(lines, highlights, inner_w, rule_w)
 	if not arena.session or not arena.session.manifest then
-		table.insert(lines, "  No active Teacher Arena session is currently staged.")
+		table.insert(lines, "  No active session staged (Teacher or ThemeCP).")
 		table.insert(lines, "")
-		table.insert(lines, "  When the Teacher invokes `arena_run` in pi, press <leader>ma (:Arena) here.")
-		table.insert(lines, "  Press [2] or <Tab> to inspect your CF Standing, Trajectory Graph, and Domain Breakdown.")
+		table.insert(lines, "  " .. string.rep("─", rule_w))
+		table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
+		table.insert(lines, "  [1/2/Tab] Switch Tab   [r] Refresh   [q] Hide")
+		table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
 		return
 	end
 
@@ -117,20 +140,19 @@ local function render_queue_tab(lines, highlights, inner_w, rule_w)
 	local clock_banner = ""
 	local clock_hl = "ArenaTimerOk"
 	if snap.mode == "stopwatch" then
-		clock_banner = "Stopwatch: " .. arena.format_clock(snap.elapsed) .. " (Unrated Guided)"
+		clock_banner = arena.format_clock(snap.elapsed) .. " (Stopwatch)"
 	elseif snap.is_overtime then
 		clock_banner = string.format(
-			"OVERTIME: +%s (Budget %s)",
+			"+%s OVERTIME (Budget %s)",
 			arena.format_clock(snap.overtime),
 			arena.format_clock(snap.budget)
 		)
 		clock_hl = "ArenaOvertime"
 	else
 		clock_banner = string.format(
-			"Remaining: %s / %s (%s)",
+			"%s Remaining (Budget %s)",
 			arena.format_clock(snap.remaining),
-			arena.format_clock(snap.budget),
-			snap.mode
+			arena.format_clock(snap.budget)
 		)
 		if snap.remaining <= 180 then
 			clock_hl = "ArenaTimerWarn"
@@ -140,28 +162,28 @@ local function render_queue_tab(lines, highlights, inner_w, rule_w)
 	table.insert(
 		lines,
 		string.format(
-			"  Session: %s   [%s · %s · %s]",
-			manifest.title or "Arena",
+			"  ⏱  %-32s   [%s · %s]",
+			clock_banner,
 			manifest.purpose or "guided",
-			manifest.gradingPolicy or "practice",
 			manifest.timerMode or "stopwatch"
-		)
-	)
-	table.insert(highlights, { line = #lines - 1, group = "ArenaSubheader" })
-
-	table.insert(
-		lines,
-		string.format(
-			"  Standing: CF %d (%s)   |   %s",
-			manifest.studentRating or 1200,
-			manifest.studentTier or "Pupil",
-			clock_banner
 		)
 	)
 	table.insert(highlights, { line = #lines - 1, group = clock_hl })
 
+	local ctx_label = manifest.title or "Session"
+	table.insert(
+		lines,
+		string.format(
+			"  Standing: CF %d (%s)   │   %s",
+			manifest.studentRating or 1200,
+			manifest.studentTier or "Pupil",
+			ctx_label
+		)
+	)
+	table.insert(highlights, { line = #lines - 1, group = "ArenaSubheader" })
+
 	if manifest.coachNote and manifest.coachNote ~= "" then
-		append_wrapped(lines, "Coach Note: " .. manifest.coachNote, inner_w, "  ", "    ")
+		append_wrapped(lines, "Coach Note: " .. manifest.coachNote, inner_w, "  ", "    ", highlights, "ArenaMuted")
 	end
 
 	table.insert(lines, "  " .. string.rep("─", rule_w))
@@ -174,12 +196,14 @@ local function render_queue_tab(lines, highlights, inner_w, rule_w)
 	table.insert(lines, "  " .. string.rep("─", rule_w))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
 
+	local has_incomplete_before = false
 	for idx, pid in ipairs(arena.session.order) do
 		local ps = arena.session.problems[pid]
 		local spec = ps.spec
 		local is_act = (arena.session.active_problem_id == pid)
 		local mark = is_act and "▶" or " "
 
+		local is_locked = manifest.strictOrder == true and has_incomplete_before and (ps.state ~= "completed")
 		local status_str = "[STAGED]"
 		local row_hl = nil
 		if ps.state == "completed" and ps.verdict then
@@ -192,19 +216,33 @@ local function render_queue_tab(lines, highlights, inner_w, rule_w)
 			row_hl = "ArenaTimerWarn"
 		elseif ps.state == "accepted" then
 			status_str = "[PAUSED]"
+		elseif is_locked then
+			status_str = "[LOCKED]"
+			row_hl = "ArenaMuted"
+		end
+
+		if ps.state ~= "completed" then
+			has_incomplete_before = true
 		end
 
 		local meta_col = ""
 		if blind and ps.state ~= "completed" then
 			meta_col = "CF ???? · Blind"
 		else
-			local dom_short = vim.fn.strcharpart(spec.domain or "General", 0, 7)
-			meta_col = string.format("CF %-4d · %s", spec.difficulty or 1200, dom_short)
+			-- Guided runs may carry no difficulty or domain; JSON null would arrive as vim.NIL.
+			local dom_short = vim.fn.strcharpart(type(spec.domain) == "string" and spec.domain or "—", 0, 7)
+			local diff_num = tonumber(spec.difficulty)
+			meta_col = diff_num and string.format("CF %-4d · %s", diff_num, dom_short) or ("CF —    · " .. dom_short)
 		end
 
 		local dur = arena.problem_elapsed_seconds(pid)
-		local bud = tonumber(spec.timeBudgetSeconds) or 1500
-		local clock_col = string.format("%s/%s", arena.format_clock(dur), arena.format_clock(bud))
+		local clock_col
+		if (manifest.timerMode or "stopwatch") == "stopwatch" then
+			clock_col = arena.format_clock(dur)
+		else
+			local bud = tonumber(spec.timeBudgetSeconds) or 1500
+			clock_col = string.format("%s/%s", arena.format_clock(dur), arena.format_clock(bud))
+		end
 
 		local row = string.format(
 			"  %s%d. %s %s %s %s %s",
@@ -249,7 +287,7 @@ end
 
 -- ── Tab 2: Standing & Graph Renderer ────────────────────────────────────────
 
-local function render_ascii_rating_chart(lines, highlights, st)
+local function render_ascii_rating_chart(lines, highlights, st, rule_w)
 	local raw_traj = st.rating_trajectory
 	local settled = {}
 	if type(raw_traj) == "table" and #raw_traj > 0 then
@@ -262,7 +300,8 @@ local function render_ascii_rating_chart(lines, highlights, st)
 		end
 	end
 
-	local limit = config.graph_history_limit or 100
+	local is_recent = (state.graph_zoom ~= "full")
+	local limit = is_recent and 45 or (config.graph_history_limit or 150)
 	local start_idx = math.max(1, #settled - limit + 1)
 	local vals = {}
 	local first_before = 1200
@@ -286,115 +325,149 @@ local function render_ascii_rating_chart(lines, highlights, st)
 		return
 	end
 
-	local max_cols = 32
-	local num_cols = math.min(#vals, max_cols)
-	local bmin, bmax, blast = {}, {}, {}
-
-	if #vals <= max_cols then
-		for i, v in ipairs(vals) do
-			bmin[i], bmax[i], blast[i] = v, v, v
-		end
-	else
-		for col = 1, num_cols do
-			local s_i = math.floor((col - 1) * #vals / num_cols) + 1
-			local e_i = math.floor(col * #vals / num_cols)
-			local mn, mx, lst = vals[s_i], vals[s_i], vals[e_i]
-			for j = s_i, e_i do
-				if vals[j] < mn then
-					mn = vals[j]
-				end
-				if vals[j] > mx then
-					mx = vals[j]
-				end
-			end
-			bmin[col], bmax[col], blast[col] = mn, mx, lst
-		end
-	end
-
-	local data_min, data_max = bmin[1], bmax[1]
-	for col = 1, num_cols do
-		if bmin[col] < data_min then
-			data_min = bmin[col]
-		end
-		if bmax[col] > data_max then
-			data_max = bmax[col]
-		end
-	end
-
+	-- Responsive canvas: spans full rule_w width
+	local chart_w = math.max(30, (rule_w or 80) - 11)
 	local chart_h = 7
+	local w_dots = chart_w * 2
+	local h_dots = chart_h * 4
+
+	local data_min, data_max = vals[1], vals[1]
+	for _, v in ipairs(vals) do
+		if v < data_min then data_min = v end
+		if v > data_max then data_max = v end
+	end
+
 	local y_min, y_max
 	if data_max == data_min then
 		y_min = data_min - 30
 		y_max = data_max + 30
 	else
-		local pad = math.max(12, math.floor((data_max - data_min) * 0.15))
+		local pad = math.max(6, math.floor((data_max - data_min) * 0.08))
 		y_min = data_min - pad
 		y_max = data_max + pad
 	end
 
-	local function val_to_row(v)
-		local norm = (v - y_min) / (y_max - y_min)
-		local r = chart_h - math.floor(norm * (chart_h - 1) + 0.5)
-		return math.max(1, math.min(chart_h, r))
-	end
-
-	local grid_w = num_cols * 2 - 1
 	local grid = {}
 	for r = 1, chart_h do
 		grid[r] = {}
-		for x = 1, grid_w do
-			grid[r][x] = " "
+		for c = 1, chart_w do
+			grid[r][c] = 0
 		end
 	end
 
-	for col = 1, num_cols do
-		local x = (col - 1) * 2 + 1
-		local r_top = val_to_row(bmax[col])
-		local r_bot = val_to_row(bmin[col])
-		local r_lst = val_to_row(blast[col])
+	local mask = {
+		{ 0x01, 0x08 },
+		{ 0x02, 0x10 },
+		{ 0x04, 0x20 },
+		{ 0x40, 0x80 },
+	}
 
-		for r = r_top, r_bot do
-			grid[r][x] = "│"
-		end
-		grid[r_lst][x] = "●"
+	local function set_dot(x, y)
+		if x < 0 or x >= w_dots or y < 0 or y >= h_dots then return end
+		local cr = math.floor(y / 4) + 1
+		local cc = math.floor(x / 2) + 1
+		local dr = (y % 4) + 1
+		local dc = (x % 2) + 1
+		grid[cr][cc] = bit.bor(grid[cr][cc], mask[dr][dc])
+	end
 
-		if col > 1 then
-			local prev_r = val_to_row(blast[col - 1])
-			local conn_x = x - 1
-			if prev_r == r_lst then
-				grid[r_lst][conn_x] = "─"
-			elseif prev_r > r_lst then
-				grid[prev_r][conn_x] = "╯"
-				grid[r_lst][conn_x] = "╭"
-				for r = r_lst + 1, prev_r - 1 do
-					grid[r][conn_x] = "│"
-				end
-			else
-				grid[prev_r][conn_x] = "╮"
-				grid[r_lst][conn_x] = "╰"
-				for r = prev_r + 1, r_lst - 1 do
-					grid[r][conn_x] = "│"
-				end
+	local function val_to_y(v)
+		local norm = (v - y_min) / (y_max - y_min)
+		local y = math.floor((h_dots - 1) - norm * (h_dots - 1) + 0.5)
+		return math.max(0, math.min(h_dots - 1, y))
+	end
+
+	local function draw_line(x0, y0, x1, y1)
+		local dx = math.abs(x1 - x0)
+		local dy = math.abs(y1 - y0)
+		local sx = x0 < x1 and 1 or -1
+		local sy = y0 < y1 and 1 or -1
+		local err = dx - dy
+		local cx, cy = x0, y0
+		while true do
+			set_dot(cx, cy)
+			if cx == x1 and cy == y1 then break end
+			local e2 = 2 * err
+			if e2 > -dy then
+				err = err - dy
+				cx = cx + sx
+			end
+			if e2 < dx then
+				err = err + dx
+				cy = cy + sy
 			end
 		end
 	end
 
-	for r = 1, chart_h do
-		local label_val = math.floor(y_max - ((r - 1) / (chart_h - 1)) * (y_max - y_min) + 0.5)
-		table.insert(lines, string.format("    %4d ┤ %s", label_val, table.concat(grid[r], "")))
+	local n = #vals
+	if n <= w_dots then
+		local prev_x, prev_y = nil, nil
+		for i, v in ipairs(vals) do
+			local x = (n == 1) and 0 or math.floor((i - 1) * (w_dots - 1) / (n - 1) + 0.5)
+			local y = val_to_y(v)
+			if prev_x ~= nil then
+				draw_line(prev_x, prev_y, x, y)
+			else
+				set_dot(x, y)
+			end
+			prev_x, prev_y = x, y
+		end
+	else
+		-- Bucketing across w_dots when total points exceed horizontal dot resolution
+		local prev_y = nil
+		for x = 0, w_dots - 1 do
+			local s_idx = math.floor(x * n / w_dots) + 1
+			local e_idx = math.floor((x + 1) * n / w_dots)
+			local mn, mx, last = vals[s_idx], vals[s_idx], vals[e_idx]
+			for j = s_idx, e_idx do
+				if vals[j] < mn then mn = vals[j] end
+				if vals[j] > mx then mx = vals[j] end
+			end
+			local y_top = val_to_y(mx)
+			local y_bot = val_to_y(mn)
+			local y_last = val_to_y(last)
+			for y = y_top, y_bot do set_dot(x, y) end
+			if prev_y ~= nil then
+				local y_conn_top = math.min(prev_y, y_last)
+				local y_conn_bot = math.max(prev_y, y_last)
+				for y = y_conn_top, y_conn_bot do set_dot(x, y) end
+			end
+			prev_y = y_last
+		end
 	end
 
-	local axis_len = math.max(6, grid_w + 2)
-	table.insert(lines, "         └" .. string.rep("─", axis_len))
+	for r = 1, chart_h do
+		local row_chars = {}
+		for c = 1, chart_w do
+			local b = grid[r][c]
+			table.insert(row_chars, b > 0 and vim.fn.nr2char(0x2800 + b) or " ")
+		end
+		local prefix = (r == 1) and string.format("  %4d ┐ ", data_max)
+			or ((r == chart_h) and string.format("  %4d ┘ ", data_min) or "       │ ")
+		table.insert(lines, prefix .. table.concat(row_chars, ""))
+	end
+
+	local axis_len = chart_w + 2
+	table.insert(lines, "       └" .. string.rep("─", axis_len))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
+
+	local cur_val = vals[#vals]
+	local net_delta = cur_val - first_before
+	local sign = net_delta >= 0 and "+" or ""
+	local scope_word = is_recent and "Recent" or "All"
+	local peak_tag = (cur_val >= data_max) and " ★ Peak" or ""
 	table.insert(
 		lines,
 		string.format(
-			"           Last %d rated problem%s (Start: CF %d → Current: CF %d)",
+			"         %s %d rated problem%s (Start: CF %d → Current: CF %d%s  │  Net: %s%d)",
+			scope_word,
 			#vals,
 			#vals == 1 and "" or "s",
 			first_before,
-			vals[#vals]
+			cur_val,
+			peak_tag,
+			sign,
+			net_delta
 		)
 	)
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
@@ -437,9 +510,17 @@ local function render_stats_tab(lines, highlights, rule_w)
 	table.insert(lines, "  " .. string.rep("─", rule_w))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
 
-	table.insert(lines, "  CF Rating Trajectory (Last " .. tostring(config.graph_history_limit or 100) .. " Rated):")
+	local settled_count = (type(st.rating_trajectory) == "table" and #st.rating_trajectory > 0)
+		and #st.rating_trajectory
+		or #(st.recent_history or {})
+	local is_recent = (state.graph_zoom ~= "full")
+	local zoom_toggle_label = is_recent and "[z] Zoom: Full Journey" or "[z] Zoom: Recent (45)"
+	local scope_title = is_recent and "  CF Rating Trajectory (Recent 45 Rated):"
+		or string.format("  CF Rating Trajectory (Full Journey — %d Rated):", settled_count)
+
+	table.insert(lines, scope_title)
 	table.insert(highlights, { line = #lines - 1, group = "ArenaSubheader" })
-	render_ascii_rating_chart(lines, highlights, st)
+	render_ascii_rating_chart(lines, highlights, st, rule_w)
 	table.insert(lines, "  " .. string.rep("─", rule_w))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
 
@@ -485,7 +566,10 @@ local function render_stats_tab(lines, highlights, rule_w)
 
 	table.insert(lines, "  " .. string.rep("─", rule_w))
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
-	table.insert(lines, "  [1/2/Tab] Switch Tab   [r] Refresh Standing   [q] Hide")
+	table.insert(
+		lines,
+		string.format("  [1/2/Tab] Switch Tab   %s   [r] Refresh Standing   [q] Hide", zoom_toggle_label)
+	)
 	table.insert(highlights, { line = #lines - 1, group = "ArenaMuted" })
 end
 
@@ -511,11 +595,14 @@ function M.render(preserve_cursor)
 	local inner_w = math.max(72, (state.win_width or 88) - 4)
 	local rule_w = math.max(68, (state.win_width or 88) - 6)
 
-	local t1 = state.tab == "queue" and " [1] Session Queue ★ " or " [1] Session Queue "
+	local t1 = state.tab == "queue" and " [1] Queue ★ " or " [1] Queue "
 	local t2 = state.tab == "stats" and " [2] Standing & Graph ★ " or " [2] Standing & Graph "
+	local tab_str = string.format("%s│%s", t1, t2)
+	local spaces = math.max(2, rule_w - vim.fn.strdisplaywidth("  ARENA") - vim.fn.strdisplaywidth(tab_str))
+	local header_line = "  ARENA" .. string.rep(" ", spaces) .. tab_str
 
 	local lines = {
-		string.format("  COMPETITIVE PROGRAMMING ARENA          %s│%s", t1, t2),
+		header_line,
 		"  " .. string.rep("═", rule_w),
 	}
 	local highlights = {
@@ -631,6 +718,22 @@ local function bind_dashboard_keys(buf)
 		M.close()
 		arena.test_samples()
 	end)
+	map("J", function()
+		local pid = get_target_problem_id()
+		if pid and arena.session and not arena.session.active_problem_id then
+			arena.session.active_problem_id = pid
+		end
+		M.close()
+		arena.judge_hidden()
+	end)
+	map("p", function()
+		local pid = get_target_problem_id()
+		if pid and arena.session and not arena.session.active_problem_id then
+			arena.session.active_problem_id = pid
+		end
+		M.close()
+		arena.prompt_approach()
+	end)
 	map("h", function()
 		local pid = get_target_problem_id()
 		if pid and arena.session and not arena.session.active_problem_id then
@@ -667,6 +770,12 @@ local function bind_dashboard_keys(buf)
 		arena.load_manifest_if_needed()
 		M.render(true)
 	end)
+	map("z", function()
+		if state.tab == "stats" then
+			state.graph_zoom = (state.graph_zoom == "recent") and "full" or "recent"
+			M.render(true)
+		end
+	end)
 end
 
 function M.open(initial_tab)
@@ -687,7 +796,7 @@ function M.open(initial_tab)
 	local ew = vim.o.columns > 0 and vim.o.columns or 120
 	local eh = vim.o.lines > 0 and vim.o.lines or 40
 	local w = math.min(92, math.max(78, math.floor(ew * 0.78)))
-	local h = math.min(28, math.max(20, math.floor(eh * 0.75)))
+	local h = math.min(30, math.max(22, math.floor(eh * 0.80)))
 	state.win_width = w
 
 	state.buf = vim.api.nvim_create_buf(false, true)
@@ -703,7 +812,7 @@ function M.open(initial_tab)
 		col = math.floor((ew - w) / 2),
 		style = "minimal",
 		border = "rounded",
-		title = " Competitive Programming Arena (1/2/Tab switch · j/k move · q close) ",
+		title = " ARENA (1/2/Tab: Switch Tab · j/k: Move · q: Close) ",
 		title_pos = "center",
 	})
 	vim.wo[state.win].cursorline = true

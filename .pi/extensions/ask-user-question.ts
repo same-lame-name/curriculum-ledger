@@ -599,14 +599,14 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 						return {
 							block: true,
 							reason:
-								"One-question-per-message rule: invoke at most ONE interactive question (`quiz` or `ask_user_question`) in a single assistant message. Wait for the user's response before asking the next question.",
+								"One question to the student per message: this one was held back. Ask it in your next message, once the student has answered.",
 						};
 					}
 					if (state.subagentCountInBatch > 0) {
 						return {
 							block: true,
 							reason:
-								"Tool batching rule: never combine `quiz` or `ask_user_question` with `subagent` in the same assistant message. Wait for the user's response before dispatching a subagent.",
+								"A question to the student goes in a message of its own: this one was held back because a subagent call shares the message. Dispatch the subagent first, or ask in your next message.",
 						};
 					}
 				}
@@ -615,7 +615,7 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 						return {
 							block: true,
 							reason:
-								"Tool batching rule: never invoke `subagent` in the same assistant message as `quiz` or `ask_user_question`. Wait for the user's answer first, then dispatch `subagent` in your next assistant message.",
+								"A subagent call goes in a message apart from questions to the student: this one was held back. Dispatch it in your next message, after the student answers.",
 						};
 					}
 					state.subagentCountInBatch++;
@@ -628,10 +628,10 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 					(state.allowedInteractiveId && toolCallId && toolCallId !== state.allowedInteractiveId) ||
 					state.interactiveCountInBatch >= 1
 				) {
-					return "One-question-per-message rule: invoke at most ONE interactive question (`quiz` or `ask_user_question`) in a single assistant message. Wait for the user's response before asking the next question.";
+					return "One question to the student per message: this one was held back. Ask it in your next message, once the student has answered.";
 				}
 				if (state.subagentCountInBatch > 0) {
-					return "Tool batching rule: never combine `quiz` or `ask_user_question` with `subagent` in the same assistant message. Wait for the user's response before dispatching a subagent.";
+					return "A question to the student goes in a message of its own: this one was held back because a subagent call shares the message. Dispatch the subagent first, or ask in your next message.";
 				}
 				state.interactiveCountInBatch++;
 				return null;
@@ -682,17 +682,11 @@ export default function askUserQuestion(pi: ExtensionAPI) {
 		name: "ask_user_question",
 		label: "ask_user_question",
 		description:
-			"Ask the user a single open-ended or preference question and pause execution until they answer. Use this for whiteboard synthesis prompts (with options omitted for free-text input) or when user preferences/decisions are needed. Invoke at most ONE ask_user_question per assistant message, and never combine it with quiz or subagent in the same assistant message.",
-		promptSnippet:
-			"Use this tool to pose a single open-ended question, preference check, or decision prompt in an assistant message before continuing.",
-		promptGuidelines: [
-			"One interactive question per assistant message: invoke at most ONE ask_user_question in a single assistant message, and NEVER invoke quiz or subagent in the same assistant message. When the tool result returns with the user's answer, continue immediately in your next assistant message.",
-			"Terminal TUI typography: ask_user_question renders inside a plain-text terminal popup and travels through JSON tool arguments. Format code, indices, and mathematical expressions using clean inline code and Unicode symbols (e.g. `dp[i][w]`, `O(N log N)`, `(L + R) / 2`, `≤`, `≠`, `→`) rather than LaTeX backslash commands.",
-			"Omit options (or pass an empty array) when asking the learner to articulate an invariant, recurrence, or deduction in their own words.",
-			'Users will always be able to select "Other" to provide custom text input when options are provided.',
-			"Use multiSelect: true only when you need multiple answers to the same question.",
-			'If you recommend a specific option, make it the first option in the list and add "(Recommended)" at the end of the label.',
-		],
+			"Ask the student one open question, preference, or decision, and wait for the answer. Strictly one question per message, on its own; continue from the answer when it returns.\n\n" +
+			"Usage rules:\n" +
+			"- Leave `options` out (or empty) to collect free text in the student's own words — ideal for having the student state an invariant, recurrence, or plan.\n" +
+			"- With `options`, the student can always choose \"Other\" and type their own answer. Put a recommended option first with \"(Recommended)\" at the end of its label, and set `multiSelect` only when several answers make sense.\n" +
+			"- The question travels as plain text into a terminal popup: format code and math with inline code and Unicode (`dp[i][w]`, `O(N log N)`, `≤`, `≠`, `→`).",
 		parameters: AskUserQuestionParams,
 
 		async execute(_toolCallId, params, signal, _onUpdate, ctx) {

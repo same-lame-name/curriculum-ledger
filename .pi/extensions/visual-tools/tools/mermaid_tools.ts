@@ -24,6 +24,7 @@ import { Type } from "@sinclair/typebox"
 import { fileURLToPath } from "node:url"
 import {
   applyEdit,
+  cleanupSessionDir,
   dirname,
   existsSync,
   findChrome,
@@ -193,5 +194,9 @@ export default function mermaidToolsExtension(pi: ExtensionAPI) {
       content.push({ type: "image", data, mimeType: "image/png" })
       return { content, details: { ok: true, path: outPath } as RenderDetails }
     },
+  })
+
+  pi.on("agent_end", async (_ev, ctx) => {
+    if (!ctx.hasUI) cleanupSessionDir(GROUP)
   })
 }

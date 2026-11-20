@@ -11,7 +11,7 @@
 import { spawn } from "node:child_process"
 import { tmpdir, homedir } from "node:os"
 import { basename, delimiter, dirname, join, resolve } from "node:path"
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 
 // rsvg-convert lives under MacPorts (/opt/local/bin); magick/gs under
 // /usr/local/bin; Homebrew under /opt/homebrew/bin. Augment PATH so the child
@@ -107,6 +107,38 @@ export interface Session {
   bodyPath: string
 }
 
+const createdSessionDirs = new Set<string>()
+let exitHookInstalled = false
+
+function cleanupCreatedSessionDirs(): void {
+  for (const dir of createdSessionDirs) {
+    try {
+      rmSync(dir, { recursive: true, force: true })
+    } catch {
+      // ignore temp cleanup errors
+    }
+  }
+  createdSessionDirs.clear()
+}
+
+export function cleanupSessionDir(group: string): void {
+  const dir = sessionDir(group)
+  createdSessionDirs.delete(dir)
+  try {
+    rmSync(dir, { recursive: true, force: true })
+  } catch {
+    // ignore temp cleanup errors
+  }
+}
+
+export function sweepStagingRootAtStartup(): void {
+  try {
+    rmSync(STAGING_ROOT, { recursive: true, force: true })
+  } catch {
+    // ignore temp cleanup errors
+  }
+}
+
 /** Per-session work dir under the OS temp dir, keyed by pid + a group name. */
 export function sessionDir(group: string): string {
   return join(STAGING_ROOT, `${group}-${process.pid}`)
@@ -116,6 +148,11 @@ export function sessionDir(group: string): string {
 export function writeBody(group: string, bodyFileName: string, source: string): Session {
   const workDir = sessionDir(group)
   mkdirSync(workDir, { recursive: true })
+  createdSessionDirs.add(workDir)
+  if (!exitHookInstalled) {
+    exitHookInstalled = true
+    process.once("exit", cleanupCreatedSessionDirs)
+  }
   const bodyPath = join(workDir, bodyFileName)
   writeFileSync(bodyPath, source, "utf8")
   return { workDir, bodyPath }

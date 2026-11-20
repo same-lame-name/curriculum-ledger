@@ -1,0 +1,24 @@
+{
+  "name": "pi-agy-bridge",
+  "version": "1.0.0",
+  "description": "Lean, ToS-compliant Antigravity ACP bridge for Pi coding agent with MCP tool delegation and RBAC shell gating",
+  "type": "module",
+  "main": "index.ts",
+  "files": [
+    "index.ts",
+    "src",
+    "README.md"
+  ],
+  "pi": {
+    "extensions": [
+      "."
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "^1.5.0",
+    "@earendil-works/pi-coding-agent": "^1.5.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1"
+  }
+}

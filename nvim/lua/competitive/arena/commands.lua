@@ -27,6 +27,18 @@ function M.setup()
 		desc = "Compile current Arena problem (true judge, no -D LOCAL) and test all manifest samples",
 	})
 
+	vim.api.nvim_create_user_command("ArenaJudge", function()
+		arena.judge_hidden()
+	end, {
+		desc = "Compile the current Arena problem and run its hidden tests (smallest first)",
+	})
+
+	vim.api.nvim_create_user_command("ArenaApproach", function()
+		arena.prompt_approach()
+	end, {
+		desc = "Write (or rewrite) your one-line approach for the current Arena problem",
+	})
+
 	vim.api.nvim_create_user_command("ArenaHint", function()
 		arena.request_hint()
 	end, {
@@ -61,6 +73,8 @@ function M.setup()
 		{ pfx .. "a", arena.open_or_toggle, desc = "Arena Dashboard (Queue & Standing)" },
 		{ pfx .. "c", arena.show_problem_card, desc = "Problem Card & Samples" },
 		{ pfx .. "t", arena.test_samples, desc = "Test Manifest Samples (Judge)" },
+		{ pfx .. "j", arena.judge_hidden, desc = "Judge Against Hidden Tests" },
+		{ pfx .. "p", arena.prompt_approach, desc = "Write Approach (One Line)" },
 		{ pfx .. "h", arena.request_hint, desc = "Request Socratic Hint" },
 		{ pfx .. "o", arena.open_url, desc = "Open Problem URL in Browser" },
 		{ pfx .. "v", arena.verdict_prompt, desc = "Record Verdict / Submit" },

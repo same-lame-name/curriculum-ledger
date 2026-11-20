@@ -907,14 +907,14 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 						return {
 							block: true,
 							reason:
-								"One-question-per-message rule: invoke at most ONE interactive question (`quiz` or `ask_user_question`) in a single assistant message. Wait for the user's response before asking the next question.",
+								"One question to the student per message: this one was held back. Ask it in your next message, once the student has answered.",
 						};
 					}
 					if (state.subagentCountInBatch > 0) {
 						return {
 							block: true,
 							reason:
-								"Tool batching rule: never combine `quiz` or `ask_user_question` with `subagent` in the same assistant message. Wait for the user's response before dispatching a subagent.",
+								"A question to the student goes in a message of its own: this one was held back because a subagent call shares the message. Dispatch the subagent first, or ask in your next message.",
 						};
 					}
 				}
@@ -923,7 +923,7 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 						return {
 							block: true,
 							reason:
-								"Tool batching rule: never invoke `subagent` in the same assistant message as `quiz` or `ask_user_question`. Wait for the user's answer first, then dispatch `subagent` in your next assistant message.",
+								"A subagent call goes in a message apart from questions to the student: this one was held back. Dispatch it in your next message, after the student answers.",
 						};
 					}
 					state.subagentCountInBatch++;
@@ -936,10 +936,10 @@ function getInteractiveBatchGuard(pi: ExtensionAPI): InteractiveBatchGuard {
 					(state.allowedInteractiveId && toolCallId && toolCallId !== state.allowedInteractiveId) ||
 					state.interactiveCountInBatch >= 1
 				) {
-					return "One-question-per-message rule: invoke at most ONE interactive question (`quiz` or `ask_user_question`) in a single assistant message. Wait for the user's response before asking the next question.";
+					return "One question to the student per message: this one was held back. Ask it in your next message, once the student has answered.";
 				}
 				if (state.subagentCountInBatch > 0) {
-					return "Tool batching rule: never combine `quiz` or `ask_user_question` with `subagent` in the same assistant message. Wait for the user's response before dispatching a subagent.";
+					return "A question to the student goes in a message of its own: this one was held back because a subagent call shares the message. Dispatch the subagent first, or ask in your next message.";
 				}
 				state.interactiveCountInBatch++;
 				return null;
@@ -990,27 +990,12 @@ export default function quiz(pi: ExtensionAPI) {
 		name: "quiz",
 		label: "quiz",
 		description:
-			"Ask the user a GRADED question with a known correct answer, then instantly grade and give feedback. Unlike ask_user_question (which collects preferences/decisions with no right answer), quiz always has a correct answer supplied by you, marks the user's selection right/wrong (✓/✗), reveals the correct answer, and shows an explanation. Use it to (1) binary-search what the learner already commands before teaching, and (2) run tight boundary/invariant checks during a lesson. Options-only: single-select or multi-select, plus an automatic 'I don't know' choice so the user can signal a genuine gap instead of guessing. An always-present optional note field (Tab to focus it) lets the user attach a free-text note to ANY answer; it reaches you only when non-empty. Invoke at most ONE quiz per assistant message, and never invoke subagent or ask_user_question in the same assistant message.",
-		promptSnippet:
-			"Use the quiz tool to pose a single graded multiple-choice or multi-select question in an assistant message (required correct answer + required explanation). Never batch multiple quiz calls or combine quiz with subagent in the same assistant message.",
-		promptGuidelines: [
-			"quiz is GRADED; ask_user_question is not. If the question has a correct answer, use quiz. If you just need a preference, decision, or open-ended input, use ask_user_question.",
-			"One interactive question per assistant message: invoke at most ONE quiz in a single assistant message, and NEVER invoke subagent or ask_user_question in the same assistant message. When the tool result returns with the user's graded answer, continue immediately in your next assistant message (pose the next probe, teach into the gap, or dispatch an audit).",
-			"Terminal TUI typography: quiz renders inside a plain-text terminal popup and travels through JSON tool arguments. Write all expressions, recurrence states, and complexities using clean inline code and Unicode symbols (e.g. `dp[i][w]`, `O(N log N)`, `(L + R) / 2`, `≤`, `≠`, `→`, `2^k`) rather than LaTeX backslash commands.",
-			'correctAnswer is REQUIRED and is the option value, not a position number. Single-select: one string (e.g. "mercury"). Multi-select: an array of strings (e.g. ["belize", "niue"]).',
-			"Always pass the option's `value` string as correctAnswer — it is self-checking and prevents miscounting positions. A value that matches no option is a hard error.",
-			"explanation is REQUIRED — always say why the correct answer holds and why tempting alternatives fail.",
-			"Multi-select is graded as an exact-set match: the user is correct only if they select every correct option and no incorrect ones.",
-			"There is no free-text mode. An 'I don't know' choice is ALWAYS added automatically — provide ONLY the real, gradable options (at least two). Never add your own uncertainty/opt-out option like 'I don't know', 'I'm not sure', or 'Not sure'; that is handled for you and a manual one would be redundant or gradable-as-wrong.",
-			"If a result comes back as dontKnow, the user honestly did not know and did NOT guess — treat it as a genuine knowledge gap to teach into, not as a wrong answer.",
-			"Any answer (right, wrong, or 'I don't know') may carry an optional free-text `note` the user typed in the always-present note field. When present it reflects what they were thinking or unsure about — read it and let it steer your follow-up. It is omitted entirely when empty.",
-			"Treat each wrong answer (distractor) as a diagnostic probe, not just filler: make it a specific, believable mistake the user might actually hold — a common misconception, or an adjacent/easily-confused concept — so that WHICH wrong answer they pick reveals WHICH nuance of their understanding is off. You learn far more from a targeted wrong choice than from a binary right/wrong, and the choice tells you exactly which gap to teach into next (and what the explanation should address).",
-			"Guardrail: every distractor must be unambiguously wrong on the intended reading — tempting, but a real error, not a defensible alternative. Don't drift into trick questions.",
-			"Anti-guessing hygiene: don't let the correct answer stand out by form (longest, most precise, most hedged, or the only one in the right format). Keep options similar in length, specificity, and phrasing so it can't be picked from shape alone.",
-			"Set multiSelect: true only when more than one option is correct.",
-			"Options are shuffled before display by default, so don't worry about which position you list the correct answer in. Set shuffle: false only when option order is meaningful (ordered values, or an 'All/None of the above' option that must stay last).",
-			"Don't leak the answer through formatting: keep option phrasing/length even and don't hint which is correct.",
-		],
+			"Ask the student one graded single- or multi-select question with a known correct answer, grading it on the spot and showing the explanation afterward (`ask_user_question` is for preferences and decisions with no right answer). Strictly one quiz per message, on its own; continue from the graded result when it returns.\n\n" +
+			"Authoring rules:\n" +
+			"- An `'I don't know'` choice and free-text note field are always added automatically, so supply two or more real gradable options: a `'don't know'` reveals a genuine gap to teach into, and a note shows what the student was thinking — read it and let it steer what comes next.\n" +
+			"- `correctAnswer` is the option's `value` — a string, or an array of values for multi-select (e.g. `\"mercury\"`, `[\"belize\", \"niue\"]`). Values are checked loudly so a mismatch errors rather than grading wrong. Set `multiSelect` only when multiple options are correct (graded as an exact set).\n" +
+			"- Each wrong option should be a specific, believable mistake of similar length and form to the others so none stands out by shape; write `explanation` to show why the right option holds and why the tempting ones fail. Options are shuffled by default; set `shuffle: false` only when their order carries meaning.\n" +
+			"- The question travels as plain text into a terminal popup: format math and code with inline code and Unicode (`dp[i][w]`, `O(N log N)`, `≤`, `≠`, `→`, `2^k`).",
 		parameters: QuizParams,
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {

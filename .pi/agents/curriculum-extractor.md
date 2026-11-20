@@ -3,7 +3,7 @@ name: curriculum-extractor
 description: "Reads a source document and decomposes it into a structured curriculum: unconditional truths, derived insights, dependency relationships, and flags for inaccuracies or gaps. Returns a DAG suitable for the teach-source skill's planning phase."
 tools: read, bash
 model: deepseek/deepseek-flash
-thinking: high
+thinking: max
 system-prompt: append
 auto-exit: true
 ---

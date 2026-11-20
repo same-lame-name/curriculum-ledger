@@ -1,0 +1,569 @@
+[
+  {
+    "round_id": "themecp_1794247471450",
+    "level": 11,
+    "performance": 1300,
+    "slots": [
+      800,
+      1000,
+      1200,
+      1200
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 800,
+        "problem_id": "abc118_b",
+        "title": "Foods Loved by Everyone",
+        "url": "https://atcoder.jp/contests/abc118/tasks/abc118_b",
+        "domain": "Implementation"
+      },
+      {
+        "slot": 1000,
+        "problem_id": "abc183_d",
+        "title": "Water Heater",
+        "url": "https://atcoder.jp/contests/abc183/tasks/abc183_d",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "cf_292B",
+        "title": "Network Topology",
+        "url": "http://codeforces.com/problemset/problem/292/B",
+        "domain": "Graphs"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "cf_327A",
+        "title": "Flipping Game",
+        "url": "http://codeforces.com/problemset/problem/327/A",
+        "domain": "Algorithmic Techniques (except DP)"
+      }
+    ],
+    "solved_in_time": [
+      "abc118_b",
+      "abc183_d",
+      "cf_292B",
+      "cf_327A"
+    ],
+    "ak": true,
+    "level_before": 11,
+    "level_after": 12,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "abc118_b": "clean",
+      "abc183_d": "clean",
+      "cf_292B": "clean",
+      "cf_327A": "clean"
+    },
+    "timestamp": "2026-11-09T18:04:31Z",
+    "closed_at": "2026-11-09T18:04:33Z"
+  },
+  {
+    "round_id": "themecp_1794247476894",
+    "level": 12,
+    "performance": 1350,
+    "slots": [
+      800,
+      1000,
+      1200,
+      1300
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 800,
+        "problem_id": "abc177_c",
+        "title": "Sum of product of pairs",
+        "url": "https://atcoder.jp/contests/abc177/tasks/abc177_c",
+        "domain": "Math"
+      },
+      {
+        "slot": 1000,
+        "problem_id": "cses_1652",
+        "title": "Forest Queries",
+        "url": "https://cses.fi/problemset/task/1652",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "abc178_d",
+        "title": "Redistribution",
+        "url": "https://atcoder.jp/contests/abc178/tasks/abc178_d",
+        "domain": "Dynamic Programming"
+      },
+      {
+        "slot": 1300,
+        "problem_id": "abc147_c",
+        "title": "HonestOrUnkind2",
+        "url": "https://atcoder.jp/contests/abc147/tasks/abc147_c",
+        "domain": "Algorithmic Techniques (except DP)"
+      }
+    ],
+    "solved_in_time": [
+      "abc177_c",
+      "cses_1652",
+      "abc178_d",
+      "abc147_c"
+    ],
+    "ak": true,
+    "level_before": 12,
+    "level_after": 13,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "abc177_c": "clean",
+      "cses_1652": "clean",
+      "abc178_d": "clean",
+      "abc147_c": "clean"
+    },
+    "timestamp": "2026-11-09T18:04:36Z",
+    "closed_at": "2026-11-09T18:04:38Z"
+  },
+  {
+    "round_id": "themecp_1794248806529",
+    "level": 13,
+    "performance": 1400,
+    "slots": [
+      800,
+      1000,
+      1200,
+      1400
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 800,
+        "problem_id": "abc156_c",
+        "title": "ABC156 C - Rally",
+        "url": "https://atcoder.jp/contests/abc156/tasks/abc156_c",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1000,
+        "problem_id": "abc089_c",
+        "title": "ABC089 C - March",
+        "url": "https://atcoder.jp/contests/abc089/tasks/abc089_c",
+        "domain": "Math"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "cf_743B",
+        "title": "CF743B - Chloe and the sequence",
+        "url": "http://codeforces.com/problemset/problem/743/B",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1400,
+        "problem_id": "cf_2034C",
+        "title": "CF2034C - Trapped in the Witch's Labyrinth",
+        "url": "https://codeforces.com/problemset/problem/2034/C",
+        "domain": "Graphs"
+      }
+    ],
+    "solved_in_time": [
+      "abc156_c",
+      "abc089_c",
+      "cf_743B",
+      "cf_2034C"
+    ],
+    "ak": true,
+    "level_before": 13,
+    "level_after": 14,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "abc156_c": "clean",
+      "abc089_c": "slow-recognition",
+      "cf_743B": "buggy-implementation",
+      "cf_2034C": "buggy-implementation"
+    },
+    "timestamp": "2026-11-09T18:26:46Z",
+    "closed_at": "2026-11-09T19:54:20Z"
+  },
+  {
+    "round_id": "themecp_1794321653568",
+    "level": 14,
+    "performance": 1425,
+    "slots": [
+      900,
+      1000,
+      1200,
+      1400
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 900,
+        "problem_id": "abc237_d",
+        "title": "LR insertion (ABC237 D)",
+        "url": "https://atcoder.jp/contests/adt_all_20260713_2/tasks/abc237_d",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1000,
+        "problem_id": "cf_2034B",
+        "title": "Rakhsh's Revival",
+        "url": "http://codeforces.com/problemset/problem/2034/B",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "abc206_d",
+        "title": "KAIBUNsyo",
+        "url": "https://atcoder.jp/contests/abc206/tasks/abc206_d",
+        "domain": "Graphs"
+      },
+      {
+        "slot": 1400,
+        "problem_id": "dp_l",
+        "title": "Deque (DP L)",
+        "url": "https://atcoder.jp/contests/dp/tasks/dp_l",
+        "domain": "Dynamic Programming"
+      }
+    ],
+    "solved_in_time": [
+      "abc237_d",
+      "cf_2034B",
+      "abc206_d",
+      "dp_l"
+    ],
+    "ak": true,
+    "level_before": 14,
+    "level_after": 15,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "abc237_d": "buggy-implementation",
+      "cf_2034B": "clean",
+      "abc206_d": "clean",
+      "dp_l": "clean"
+    },
+    "timestamp": "2026-11-10T14:40:53Z",
+    "closed_at": "2026-11-10T15:46:56Z"
+  },
+  {
+    "round_id": "themecp_1794394019057",
+    "level": 15,
+    "performance": 1450,
+    "slots": [
+      900,
+      1100,
+      1200,
+      1400
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 900,
+        "problem_id": "cf_115A",
+        "title": "A. Party",
+        "url": "http://codeforces.com/problemset/problem/115/A",
+        "domain": "Graphs"
+      },
+      {
+        "slot": 1100,
+        "problem_id": "abc146_c",
+        "title": "ABC146 C - Buy an Integer",
+        "url": "https://atcoder.jp/contests/abc146/tasks/abc146_c",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "cf_776B",
+        "title": "B. Sherlock and his girlfriend",
+        "url": "http://codeforces.com/problemset/problem/776/B",
+        "domain": "Math"
+      },
+      {
+        "slot": 1400,
+        "problem_id": "cf_158C",
+        "title": "C. Cd and pwd commands",
+        "url": "http://codeforces.com/problemset/problem/158/C",
+        "domain": "Data Structures"
+      }
+    ],
+    "solved_in_time": [
+      "cf_115A",
+      "abc146_c",
+      "cf_776B",
+      "cf_158C"
+    ],
+    "ak": true,
+    "level_before": 15,
+    "level_after": 16,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "cf_115A": "clean",
+      "abc146_c": "clean",
+      "cf_776B": "buggy-implementation",
+      "cf_158C": "clean"
+    },
+    "timestamp": "2026-11-11T10:46:59Z",
+    "closed_at": "2026-11-11T11:38:13Z"
+  },
+  {
+    "round_id": "themecp_1794400644097",
+    "level": 16,
+    "performance": 1475,
+    "slots": [
+      900,
+      1100,
+      1300,
+      1400
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 900,
+        "problem_id": "cses_1073",
+        "title": "Towers",
+        "url": "https://cses.fi/problemset/task/1073",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1100,
+        "problem_id": "cf_834B",
+        "title": "B. The Festive Evening",
+        "url": "http://codeforces.com/problemset/problem/834/B",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1300,
+        "problem_id": "abc145_d",
+        "title": "D - Knight",
+        "url": "https://atcoder.jp/contests/abc145/tasks/abc145_d",
+        "domain": "Math"
+      },
+      {
+        "slot": 1400,
+        "problem_id": "cf_514B",
+        "title": "B. Han Solo and Lazer Gun",
+        "url": "http://codeforces.com/problemset/problem/514/B",
+        "domain": "Geometry"
+      }
+    ],
+    "solved_in_time": [
+      "cses_1073",
+      "cf_834B",
+      "abc145_d",
+      "cf_514B"
+    ],
+    "ak": true,
+    "level_before": 16,
+    "level_after": 17,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "cses_1073": "clean",
+      "cf_834B": "clean",
+      "abc145_d": "slow-recognition",
+      "cf_514B": "clean"
+    },
+    "timestamp": "2026-11-11T12:37:24Z",
+    "closed_at": "2026-11-11T13:54:22Z"
+  },
+  {
+    "round_id": "themecp_1794670935456",
+    "level": 17,
+    "performance": 1500,
+    "slots": [
+      900,
+      1100,
+      1300,
+      1500
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 900,
+        "problem_id": "abc116_c",
+        "title": "ABC116 C - Grand Garden",
+        "url": "https://atcoder.jp/contests/abc116/tasks/abc116_c",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1100,
+        "problem_id": "cf_630C",
+        "title": "CF630C - Lucky Numbers",
+        "url": "https://codeforces.com/problemset/problem/630/C",
+        "domain": "Math"
+      },
+      {
+        "slot": 1300,
+        "problem_id": "cf_893C",
+        "title": "CF893C - Rumor",
+        "url": "https://codeforces.com/problemset/problem/893/C",
+        "domain": "Graphs"
+      },
+      {
+        "slot": 1500,
+        "problem_id": "cf_332B",
+        "title": "CF332B - Maximum Absurdity",
+        "url": "https://codeforces.com/problemset/problem/332/B",
+        "domain": "Dynamic Programming"
+      }
+    ],
+    "solved_in_time": [
+      "abc116_c",
+      "cf_630C",
+      "cf_893C",
+      "cf_332B"
+    ],
+    "ak": true,
+    "level_before": 17,
+    "level_after": 18,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "abc116_c": "clean",
+      "cf_630C": "clean",
+      "cf_332B": "clean",
+      "cf_893C": "clean"
+    },
+    "timestamp": "2026-11-14T15:42:15Z",
+    "closed_at": "2026-11-14T16:33:12Z"
+  },
+  {
+    "round_id": "themecp_1794678745968",
+    "level": 18,
+    "performance": 1525,
+    "slots": [
+      1000,
+      1100,
+      1300,
+      1500
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 1000,
+        "problem_id": "cf_670B",
+        "title": "CF670B - Game of Robots",
+        "url": "https://codeforces.com/problemset/problem/670/B",
+        "domain": "Math"
+      },
+      {
+        "slot": 1100,
+        "problem_id": "cf_535B",
+        "title": "CF535B - Tavas and SaDDas",
+        "url": "https://codeforces.com/problemset/problem/535/B",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1300,
+        "problem_id": "abc153_e",
+        "title": "ABC153 E - Crested Ibis vs Monster",
+        "url": "https://atcoder.jp/contests/abc153/tasks/abc153_e",
+        "domain": "Dynamic Programming"
+      },
+      {
+        "slot": 1500,
+        "problem_id": "cf_574B",
+        "title": "CF574B - Bear and Three Musketeers",
+        "url": "https://codeforces.com/problemset/problem/574/B",
+        "domain": "Graphs"
+      }
+    ],
+    "solved_in_time": [
+      "cf_670B",
+      "cf_535B",
+      "abc153_e",
+      "cf_574B"
+    ],
+    "ak": true,
+    "level_before": 18,
+    "level_after": 19,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "cf_670B": "clean",
+      "cf_535B": "clean",
+      "abc153_e": "clean",
+      "cf_574B": "clean"
+    },
+    "timestamp": "2026-11-14T17:52:25Z",
+    "closed_at": "2026-11-14T18:53:29Z"
+  },
+  {
+    "round_id": "themecp_1794927207910",
+    "level": 19,
+    "performance": 1550,
+    "slots": [
+      1000,
+      1200,
+      1300,
+      1500
+    ],
+    "theme": "mixed",
+    "time_limit_minutes": 120,
+    "problems": [
+      {
+        "slot": 1000,
+        "problem_id": "cf_893B",
+        "title": "B. Beautiful Divisors",
+        "url": "http://codeforces.com/problemset/problem/893/B",
+        "domain": "Data Structures"
+      },
+      {
+        "slot": 1200,
+        "problem_id": "abc151_d",
+        "title": "ABC151 D - Maze Master",
+        "url": "https://atcoder.jp/contests/abc151/tasks/abc151_d",
+        "domain": "Graphs"
+      },
+      {
+        "slot": 1300,
+        "problem_id": "cf_251A",
+        "title": "A. Points on Line",
+        "url": "http://codeforces.com/problemset/problem/251/A",
+        "domain": "Algorithmic Techniques (except DP)"
+      },
+      {
+        "slot": 1500,
+        "problem_id": "cf_18A",
+        "title": "A. Triangle",
+        "url": "http://codeforces.com/problemset/problem/18/A",
+        "domain": "Geometry"
+      }
+    ],
+    "solved_in_time": [
+      "cf_893B",
+      "abc151_d",
+      "cf_251A",
+      "cf_18A"
+    ],
+    "ak": true,
+    "level_before": 19,
+    "level_after": 20,
+    "upsolve": null,
+    "waived": false,
+    "waive_reason": "",
+    "labels": {
+      "cf_893B": "clean",
+      "abc151_d": "clean",
+      "cf_251A": "clean",
+      "cf_18A": "clean"
+    },
+    "timestamp": "2026-11-17T14:53:27Z",
+    "closed_at": "2026-11-17T16:00:56Z"
+  }
+]

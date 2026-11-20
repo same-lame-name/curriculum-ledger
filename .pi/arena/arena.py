@@ -5,10 +5,22 @@ Encapsulates all access to .pi/arena/rating.json, .pi/arena/history.json,
 and .pi/arena/active/*. Pure Python 3 standard library.
 
 Subcommands:
-  python3 .pi/arena/arena.py standing
+  python3 .pi/arena/arena.py standing [--course-slug <slug|none>]
+  python3 .pi/arena/arena.py inspect [--problem-ids p1,p2] [--session-id <sid>] [--course-slug <slug|none>] [--limit 20]
+  python3 .pi/arena/arena.py abandon_active [--active-dir .pi/arena/active]
   python3 .pi/arena/arena.py budget --difficulty 1400 [--rating 1200]
   python3 .pi/arena/arena.py close_session [--active-dir .pi/arena/active]
-  python3 .pi/arena/arena.py record_verdict --problem-id <id> --verdict <AC|WA|TLE|MLE|RE> [--session-id <sid>]
+  python3 .pi/arena/arena.py record_verdict --problem-id <id> --verdict <AC|WA|TLE|MLE|RE|ABANDON> [--session-id <sid>]
+  python3 .pi/arena/arena.py annotate --problem-id <id> --note "<one line>"
+  python3 .pi/arena/arena.py attempted
+
+This CLI and the arena_ledger / arena_run tools are the Arena's API. Other parts
+of the setup (the catalog, helpers, the teacher) ask through them and never read
+rating.json, history.json, or active/ directly, so the storage can change
+without breaking anyone.
+
+Guided runs may carry no difficulty or domain; such entries stay out of the
+rating and (without a domain) out of the domain statistics.
 """
 
 import argparse
@@ -136,7 +148,7 @@ def save_history(history: List[Dict[str, Any]]) -> None:
         f.write("\n")
 
 
-def compute_time_budget_seconds(difficulty: int, student_rating: int) -> int:
+def compute_time_budget_seconds(difficulty: int, student_rating: int = 1200) -> int:
     """Calibrated default time budget in seconds: clamp(round(25 * 2^((D - R)/400)) * 60, 600, 5400)."""
     minutes = round(25.0 * (2.0 ** ((difficulty - student_rating) / 400.0)))
     minutes = max(10, min(90, int(minutes)))
@@ -202,16 +214,19 @@ def compute_elo_delta(
     v = (verdict or "").upper()
 
     if v == "AC":
+        wa_base = max(0.60, 1.0 - 0.10 * max(0, int(wrong_attempts)))
         if hints_used >= 2:
-            actual = 0.10
+            base, floor = 0.10, 0.03
         elif hints_used == 1:
-            actual = 0.15 if overtime_seconds > 0 else 0.25
-        elif overtime_seconds > 0:
-            b = max(300, budget_seconds or 1500)
-            actual = 0.45 * math.exp(-float(overtime_seconds) / float(b))
-            actual = max(0.05, min(0.45, actual))
+            base, floor = 0.25, 0.08
         else:
-            actual = max(0.60, 1.0 - 0.10 * max(0, int(wrong_attempts)))
+            base, floor = wa_base, 0.15
+
+        if overtime_seconds > 0:
+            tau = 0.4 * float(max(300, budget_seconds or 1500))
+            actual = max(floor, base * math.exp(-float(overtime_seconds) / tau))
+        else:
+            actual = base
     else:
         actual = 0.0
 
@@ -225,6 +240,45 @@ def compute_elo_delta(
         "rating_after": new_rating,
         "rating_delta": new_rating - student_rating,
     }
+
+
+FAILURE_VERDICTS = ("WA", "TLE", "MLE", "RE", "ABANDON")
+
+
+def as_difficulty(value: Any) -> Optional[int]:
+    """CF difficulty as int, or None when the run carried none (guided runs may omit it)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    return None
+
+
+def normalize_thinking_seconds(raw_val: Any, duration_sec: int) -> Optional[int]:
+    """Clamp optional thinking cut-point into [0, duration_sec]; return None when absent."""
+    if raw_val is None or isinstance(raw_val, bool):
+        return None
+    try:
+        val = int(raw_val)
+    except (TypeError, ValueError):
+        return None
+    val = max(0, val)
+    return min(val, max(0, duration_sec))
+
+
+def ever_solved(entry: Dict[str, Any]) -> bool:
+    """A problem stays solved once any attempt on it was accepted."""
+    if (entry.get("verdict") or "").upper() == "AC":
+        return True
+    return any((pa.get("verdict") or "").upper() == "AC" for pa in entry.get("past_attempts", []) or [])
+
+
+def was_engaged(entry: Dict[str, Any]) -> bool:
+    """True when the student actively worked on or submitted the problem (not purely SKIPPED)."""
+    v = (entry.get("verdict") or "").upper()
+    if v not in ("", "PENDING", "SKIPPED"):
+        return True
+    return any((pa.get("verdict") or "").upper() not in ("", "PENDING", "SKIPPED") for pa in entry.get("past_attempts", []) or [])
 
 
 def recompute_domain_stats(rating_state: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
@@ -244,18 +298,22 @@ def recompute_domain_stats(rating_state: Dict[str, Any], history: List[Dict[str,
         v = (entry.get("verdict") or "").upper()
         if v in ("", "PENDING", "SKIPPED"):
             continue
+        if not entry.get("domain"):
+            continue  # guided run without a domain: kept in history, out of domain stats
         dom = normalize_domain(entry.get("domain"))
         pid = entry.get("problem_id", "")
-        diff = int(entry.get("difficulty") or 1200)
+        diff = as_difficulty(entry.get("difficulty"))
         domains[dom]["attempted"] += 1
-        if v == "AC":
+        if ever_solved(entry):
             domains[dom]["solved"] += 1
-            solved_diffs[dom].append(diff)
-            if diff > domains[dom]["max_solved_difficulty"]:
-                domains[dom]["max_solved_difficulty"] = diff
+            if diff is not None:
+                solved_diffs[dom].append(diff)
+                if diff > domains[dom]["max_solved_difficulty"]:
+                    domains[dom]["max_solved_difficulty"] = diff
+        if v == "AC":
             if pid in domains[dom]["recent_failures"]:
                 domains[dom]["recent_failures"].remove(pid)
-        elif v in ("WA", "TLE", "MLE", "RE", "ABANDON"):
+        elif v in FAILURE_VERDICTS:
             if pid and pid not in domains[dom]["recent_failures"]:
                 domains[dom]["recent_failures"].append(pid)
                 domains[dom]["recent_failures"] = domains[dom]["recent_failures"][-5:]
@@ -267,31 +325,90 @@ def recompute_domain_stats(rating_state: Dict[str, Any], history: List[Dict[str,
     rating_state["domains"] = domains
 
 
-def get_standing() -> Dict[str, Any]:
+def _default_practice_dir() -> str:
+    return os.path.expanduser(os.environ.get("PI_PRACTICE_DIR", "~/playground/contests/practice"))
+
+
+def _resolve_solution_path(
+    pid: str, saved_path: Optional[str] = None, practice_dir: Optional[str] = None
+) -> Optional[str]:
+    """Return persisted solution_path if present, else probe practice_dir/{pid}.cpp when on disk."""
+    if isinstance(saved_path, str) and saved_path.strip():
+        return saved_path.strip()
+    pdir = practice_dir or _default_practice_dir()
+    cand = os.path.join(pdir, f"{pid}.cpp")
+    return os.path.abspath(cand) if os.path.exists(cand) else None
+
+
+def _matches_course_slug(entry_slug: Any, course_slug: Optional[str]) -> bool:
+    """Match course_slug filter ('none'/'null'/'themecp' matches unaffiliated entries)."""
+    if course_slug is None:
+        return True
+    norm = course_slug.strip()
+    if norm in ("none", "null", "themecp"):
+        return entry_slug in (None, "")
+    return entry_slug == norm
+
+
+def get_standing(course_slug: Optional[str] = None) -> Dict[str, Any]:
     rating_state = load_rating()
     history = load_history()
 
     solved_ids = []
     attempted_ids = []
     pending_submissions = []
+    upsolve_queue = []
+    notes = []
 
+    scoped_entries = []
     for h in history:
         pid = h.get("problem_id")
         cat_id = h.get("catalog_id")
         v = (h.get("verdict") or "").upper()
-        if pid and pid not in attempted_ids:
-            attempted_ids.append(pid)
-        if cat_id and cat_id not in attempted_ids:
-            attempted_ids.append(cat_id)
-        if v == "AC":
+        if was_engaged(h):
+            if pid and pid not in attempted_ids:
+                attempted_ids.append(pid)
+            if cat_id and cat_id not in attempted_ids:
+                attempted_ids.append(cat_id)
+        if ever_solved(h):
             if pid and pid not in solved_ids:
                 solved_ids.append(pid)
             if cat_id and cat_id not in solved_ids:
                 solved_ids.append(cat_id)
-        elif v == "SUBMITTED":
+
+        if not _matches_course_slug(h.get("course_slug"), course_slug):
+            continue
+        scoped_entries.append(h)
+
+        for n in h.get("notes", []) or []:
+            notes.append(
+                {
+                    "problem_id": pid,
+                    "course_slug": h.get("course_slug"),
+                    "purpose": h.get("purpose"),
+                    "session_id": h.get("session_id"),
+                    "note": n.get("note", ""),
+                    "timestamp": n.get("timestamp"),
+                }
+            )
+        if not ever_solved(h) and v in FAILURE_VERDICTS:
+            upsolve_queue.append(
+                {
+                    "session_id": h.get("session_id"),
+                    "course_slug": h.get("course_slug"),
+                    "problem_id": pid,
+                    "title": h.get("title"),
+                    "url": h.get("url"),
+                    "verdict": v,
+                    "purpose": h.get("purpose"),
+                    "timestamp": h.get("timestamp"),
+                }
+            )
+        if v == "SUBMITTED":
             pending_submissions.append(
                 {
                     "session_id": h.get("session_id"),
+                    "course_slug": h.get("course_slug"),
                     "problem_id": pid,
                     "title": h.get("title"),
                     "difficulty": h.get("difficulty"),
@@ -301,10 +418,11 @@ def get_standing() -> Dict[str, Any]:
             )
 
     recent_compact = []
-    for h in history[-15:]:
+    for h in scoped_entries[-15:]:
         recent_compact.append(
             {
                 "session_id": h.get("session_id"),
+                "course_slug": h.get("course_slug"),
                 "problem_id": h.get("problem_id"),
                 "title": h.get("title"),
                 "difficulty": h.get("difficulty"),
@@ -312,6 +430,7 @@ def get_standing() -> Dict[str, Any]:
                 "purpose": h.get("purpose"),
                 "verdict": h.get("verdict"),
                 "duration_seconds": h.get("duration_seconds"),
+                "thinking_seconds": h.get("thinking_seconds"),
                 "overtime_seconds": h.get("overtime_seconds", 0),
                 "wrong_attempts": h.get("wrong_attempts", 0),
                 "hints_used": h.get("hints_used", 0),
@@ -337,12 +456,16 @@ def get_standing() -> Dict[str, Any]:
         if h.get("rated") and not h.get("pending_verdict") and h.get("rating_after") is not None
     ][-100:]
 
+    notes.sort(key=lambda n: n.get("timestamp") or "")
     return {
         "global": rating_state["global"],
         "domains": rating_state["domains"],
+        "course_slug_filter": course_slug,
         "solved_problem_ids": solved_ids,
         "attempted_problem_ids": attempted_ids,
         "pending_submissions": pending_submissions,
+        "upsolve_queue": upsolve_queue,
+        "recent_notes": notes[-5:],
         "recent_history": recent_compact,
         "rating_trajectory": rated_tail,
     }
@@ -453,16 +576,20 @@ def upsert_history_entry(history: List[Dict[str, Any]], new_entry: Dict[str, Any
                     "purpose": existing.get("purpose"),
                     "verdict": existing.get("verdict"),
                     "duration_seconds": existing.get("duration_seconds"),
+                    "thinking_seconds": existing.get("thinking_seconds"),
                     "wrong_attempts": existing.get("wrong_attempts", 0),
                     "hints_used": existing.get("hints_used", 0),
                     "rating_delta": existing.get("rating_delta", 0),
+                    "approach": existing.get("approach", ""),
                 }
             )
             new_entry["past_attempts"] = past[-10:]
+            new_entry["notes"] = list(existing.get("notes", []) or [])[-5:]
             history.pop(idx)
             history.append(new_entry)
             return
     new_entry["past_attempts"] = []
+    new_entry.setdefault("notes", [])
     history.append(new_entry)
 
 
@@ -498,41 +625,82 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
         if isinstance(pr, dict) and pr.get("id"):
             result_by_id[pr["id"]] = pr
 
-    practice_dir = os.path.expanduser(os.environ.get("PI_PRACTICE_DIR", "~/playground/contests/practice"))
+    practice_dir = _default_practice_dir()
 
     enriched_problems = []
     timestamp = now_iso()
+
+    session_total_budget = int(manifest.get("totalTimeBudgetSeconds") or 0)
+    session_duration = int(
+        raw_result.get("pooledElapsedSeconds")
+        or raw_result.get("pooled_elapsed_seconds")
+        or raw_result.get("durationSeconds")
+        or raw_result.get("duration_seconds")
+        or 0
+    )
+    session_overtime = max(0, session_duration - session_total_budget) if (timer_mode == "pooled" and session_total_budget > 0) else 0
+    has_contest_engagement = grading_policy == "contest" and any(
+        (result_by_id.get(mp["id"], {}).get("verdict") or "SKIPPED").upper() != "SKIPPED"
+        or int(result_by_id.get(mp["id"], {}).get("durationSeconds") or result_by_id.get(mp["id"], {}).get("duration_seconds") or 0) > 0
+        for mp in manifest.get("problems", [])
+    )
 
     for mp in manifest.get("problems", []):
         pid = mp["id"]
         pr = result_by_id.get(pid, {})
         verdict = (pr.get("verdict") or "SKIPPED").upper()
         duration_sec = int(pr.get("durationSeconds") or pr.get("duration_seconds") or 0)
-        budget_sec = int(mp.get("timeBudgetSeconds") or compute_time_budget_seconds(int(mp.get("difficulty", 1200)), int(rating_state["global"]["rating"])))
-        overtime_sec = int(pr.get("overtimeSeconds") or pr.get("overtime_seconds") or max(0, duration_sec - budget_sec if timer_mode != "stopwatch" else 0))
+        raw_thinking = pr.get("thinkingSeconds") if pr.get("thinkingSeconds") is not None else pr.get("thinking_seconds")
+        thinking_sec = normalize_thinking_seconds(raw_thinking, duration_sec)
+        diff = as_difficulty(mp.get("difficulty"))
+        budget_sec = int(mp.get("timeBudgetSeconds") or 0)
+        if budget_sec <= 0 and timer_mode != "stopwatch" and diff is not None:
+            budget_sec = compute_time_budget_seconds(diff, int(rating_state["global"]["rating"]))
+
+        # For pooled timer mode, overtime is pool-relative (never shadowed by per-problem elapsed clocks).
+        if timer_mode == "pooled":
+            if session_overtime == 0:
+                default_overtime = 0
+            else:
+                solved_at = int(pr.get("solvedAtSeconds") or pr.get("solved_at_seconds") or 0)
+                if solved_at > 0 and session_total_budget > 0:
+                    default_overtime = max(0, solved_at - session_total_budget)
+                else:
+                    default_overtime = min(duration_sec, session_overtime) if duration_sec > 0 else session_overtime
+            overtime_sec = default_overtime
+        elif timer_mode != "stopwatch" and budget_sec > 0:
+            default_overtime = max(0, duration_sec - budget_sec)
+            raw_ot = pr.get("overtimeSeconds") if pr.get("overtimeSeconds") is not None else pr.get("overtime_seconds")
+            overtime_sec = int(raw_ot) if raw_ot is not None else default_overtime
+        else:
+            overtime_sec = 0
+        solved_at_sec = int(pr.get("solvedAtSeconds") or pr.get("solved_at_seconds") or 0)
         wrong_attempts = int(pr.get("wrongAttempts") or pr.get("wrong_attempts") or 0)
         hints_used = int(pr.get("hintsUsed") or pr.get("hints_used") or 0)
         hints_viewed = pr.get("hintsViewed") or (mp.get("hints", [])[:hints_used])
         reflection = (pr.get("reflection") or "").strip()
+        approach = (pr.get("approach") or "").strip()
+        local_judge = pr.get("localJudge") if isinstance(pr.get("localJudge"), dict) else None
         attempts_timeline = pr.get("attempts") or []
 
         # Read final C++ code from scratch/<id>_final.cpp, or fallback to practice_dir/<id>.cpp
         final_scratch = os.path.join(scratch_dir, f"{pid}_final.cpp")
         final_code = read_text_safe(final_scratch)
+        fallback_cpp = os.path.join(practice_dir, f"{pid}.cpp")
         if not final_code:
-            fallback_cpp = os.path.join(practice_dir, f"{pid}.cpp")
             final_code = read_text_safe(fallback_cpp)
+        solution_path = os.path.abspath(fallback_cpp) if os.path.exists(fallback_cpp) else None
 
         attempt_diffs = compute_attempt_diffs(scratch_dir, pid, final_code)
 
-        diff = int(mp.get("difficulty") or 1200)
-        dom = normalize_domain(mp.get("domain"))
+        dom = normalize_domain(mp.get("domain")) if mp.get("domain") else None
         cur_rating = int(rating_state["global"]["rating"])
+        problem_k = k_factor if diff is not None else 0  # no difficulty, no rating move
 
         if verdict == "SUBMITTED":
-            # Student submitted directly to Teacher (<leader>ms). Ledger stays pending until record_verdict.
+            # Student handed the code to the teacher. Ledger stays pending until record_verdict.
             elo_info = {
-                "rated": k_factor > 0,
+                "rated": problem_k > 0,
                 "expected_score": 0.0,
                 "actual_score": 0.0,
                 "rating_before": cur_rating,
@@ -540,12 +708,12 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
                 "rating_delta": 0,
             }
             pending_verdict = True
-        elif verdict in ("AC", "WA", "TLE", "MLE", "RE", "ABANDON"):
+        elif verdict in ("AC", "WA", "TLE", "MLE", "RE", "ABANDON") or (verdict == "SKIPPED" and has_contest_engagement and problem_k > 0):
             elo_info = compute_elo_delta(
                 student_rating=cur_rating,
-                problem_difficulty=diff,
+                problem_difficulty=diff if diff is not None else cur_rating,
                 verdict=verdict,
-                k_factor=k_factor,
+                k_factor=problem_k,
                 wrong_attempts=wrong_attempts,
                 hints_used=hints_used,
                 overtime_seconds=overtime_sec,
@@ -554,7 +722,7 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
             apply_settled_verdict_to_global(rating_state, elo_info, verdict)
             pending_verdict = False
         else:
-            # SKIPPED / untouched
+            # SKIPPED / untouched (outside engaged contest)
             elo_info = {
                 "rated": False,
                 "expected_score": 0.0,
@@ -565,13 +733,13 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
             }
             pending_verdict = False
 
-        if verdict != "SKIPPED":
+        if verdict != "SKIPPED" or elo_info["rated"]:
             hist_entry = {
                 "session_id": session_id,
                 "course_slug": course_slug,
                 "purpose": purpose,
                 "grading_policy": grading_policy,
-                "k_factor": k_factor,
+                "k_factor": problem_k,
                 "problem_id": pid,
                 "catalog_id": mp.get("catalogId") or pid,
                 "title": mp.get("title", pid),
@@ -582,8 +750,10 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
                 "verdict": verdict,
                 "pending_verdict": pending_verdict,
                 "duration_seconds": duration_sec,
+                "thinking_seconds": thinking_sec,
                 "budget_seconds": budget_sec,
                 "overtime_seconds": overtime_sec,
+                "solved_at_seconds": solved_at_sec,
                 "wrong_attempts": wrong_attempts,
                 "hints_used": hints_used,
                 "rated": elo_info["rated"],
@@ -591,6 +761,9 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
                 "rating_after": elo_info["rating_after"],
                 "rating_delta": elo_info["rating_delta"],
                 "reflection": reflection,
+                "approach": approach,
+                "local_judge": local_judge,
+                "solution_path": solution_path,
                 "timestamp": timestamp,
             }
             upsert_history_entry(history, hist_entry)
@@ -607,13 +780,18 @@ def close_session(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
                 "verdict": verdict,
                 "pending_verdict": pending_verdict,
                 "duration_seconds": duration_sec,
+                "thinking_seconds": thinking_sec,
                 "budget_seconds": budget_sec,
                 "overtime_seconds": overtime_sec,
+                "solved_at_seconds": solved_at_sec,
                 "wrong_attempts": wrong_attempts,
                 "attempts": attempts_timeline,
                 "hints_used": hints_used,
                 "hints_viewed": hints_viewed,
                 "reflection": reflection,
+                "approach": approach,
+                "local_judge": local_judge,
+                "solution_path": solution_path,
                 "rated": elo_info["rated"],
                 "rating_before": elo_info["rating_before"],
                 "rating_after": elo_info["rating_after"],
@@ -672,10 +850,13 @@ def record_verdict(problem_id: str, verdict: str, session_id: Optional[str] = No
     target["pending_verdict"] = False
     target["timestamp"] = now_iso()
 
+    if as_difficulty(target.get("difficulty")) is None:
+        k_factor = 0  # no difficulty on record: settle the verdict without a rating move
+
     if was_pending and k_factor > 0:
         elo_info = compute_elo_delta(
             student_rating=cur_rating,
-            problem_difficulty=int(target.get("difficulty") or 1200),
+            problem_difficulty=int(target.get("difficulty")),
             verdict=v,
             k_factor=k_factor,
             wrong_attempts=int(target.get("wrong_attempts") or 0),
@@ -714,11 +895,253 @@ def record_verdict(problem_id: str, verdict: str, session_id: Optional[str] = No
     }
 
 
+def attempted() -> List[Dict[str, Any]]:
+    """Every engaged problem in the ledger (excluding pure-SKIPPED unreached problems)."""
+    out = []
+    for h in load_history():
+        if not was_engaged(h):
+            continue
+        out.append(
+            {
+                "problem_id": h.get("problem_id"),
+                "catalog_id": h.get("catalog_id"),
+                "url": h.get("url") or "",
+                "verdict": (h.get("verdict") or "").upper(),
+                "solved": ever_solved(h),
+            }
+        )
+    return out
+
+
+def annotate(problem_id: str, note: str) -> Dict[str, Any]:
+    """Attach a one-line practice note to the latest ledger entry for a problem (last 5 kept)."""
+    note = (note or "").strip()
+    if not note:
+        raise ValueError("annotate needs a non-empty note")
+    history = load_history()
+    target = None
+    for entry in reversed(history):
+        if entry.get("problem_id") == problem_id or entry.get("catalog_id") == problem_id:
+            target = entry
+            break
+    if target is None:
+        raise ValueError(f"Problem {problem_id!r} is not in the Arena ledger yet")
+    notes = list(target.get("notes", []) or [])
+    notes.append({"note": note, "timestamp": now_iso()})
+    target["notes"] = notes[-5:]
+    save_history(history)
+    return {"ok": True, "problem_id": target.get("problem_id"), "note": note, "notes_count": len(target["notes"])}
+
+
+def inspect_history(
+    problem_ids: Optional[List[str]] = None,
+    session_id: Optional[str] = None,
+    course_slug: Optional[str] = None,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    """Return compact ledger records filtered by problemIds, sessionId, or courseSlug."""
+    history = load_history()
+    practice_dir = _default_practice_dir()
+    pid_set = {p.strip() for p in problem_ids if p and p.strip()} if problem_ids else None
+    max_items = max(1, min(100, int(limit or 20)))
+
+    matches: List[Dict[str, Any]] = []
+    for h in reversed(history):
+        pid = h.get("problem_id") or ""
+        cat_id = h.get("catalog_id") or ""
+        if pid_set is not None and pid not in pid_set and cat_id not in pid_set:
+            continue
+        if session_id and h.get("session_id") != session_id:
+            continue
+        if not _matches_course_slug(h.get("course_slug"), course_slug):
+            continue
+
+        matches.append(
+            {
+                "session_id": h.get("session_id"),
+                "course_slug": h.get("course_slug"),
+                "purpose": h.get("purpose"),
+                "grading_policy": h.get("grading_policy"),
+                "problem_id": pid,
+                "catalog_id": cat_id or pid,
+                "title": h.get("title", pid),
+                "url": h.get("url", ""),
+                "platform": h.get("platform", ""),
+                "difficulty": as_difficulty(h.get("difficulty")),
+                "domain": h.get("domain"),
+                "verdict": h.get("verdict"),
+                "pending_verdict": bool(h.get("pending_verdict", False)),
+                "duration_seconds": int(h.get("duration_seconds") or 0),
+                "thinking_seconds": normalize_thinking_seconds(h.get("thinking_seconds"), int(h.get("duration_seconds") or 0)),
+                "budget_seconds": int(h.get("budget_seconds") or 0),
+                "overtime_seconds": int(h.get("overtime_seconds") or 0),
+                "solved_at_seconds": int(h.get("solved_at_seconds") or 0),
+                "wrong_attempts": int(h.get("wrong_attempts") or 0),
+                "hints_used": int(h.get("hints_used") or 0),
+                "rated": bool(h.get("rated", False)),
+                "rating_delta": int(h.get("rating_delta") or 0),
+                "approach": (h.get("approach") or "").strip(),
+                "reflection": (h.get("reflection") or "").strip(),
+                "local_judge": h.get("local_judge"),
+                "notes": h.get("notes") or [],
+                "solution_path": _resolve_solution_path(pid, h.get("solution_path"), practice_dir),
+                "past_attempts_count": len(h.get("past_attempts") or []),
+                "timestamp": h.get("timestamp"),
+            }
+        )
+        if len(matches) >= max_items:
+            break
+    return matches
+
+
+def _parse_events_jsonl(events_path: str) -> Dict[str, Dict[str, Any]]:
+    """Aggregate live Neovim Arena events per problem ID."""
+    per_prob: Dict[str, Dict[str, Any]] = {}
+    if not os.path.exists(events_path):
+        return per_prob
+    with open(events_path, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            raw = line.strip()
+            if not raw:
+                continue
+            try:
+                ev = json.loads(raw)
+            except Exception:
+                continue
+            if not isinstance(ev, dict):
+                continue
+            ev_type = ev.get("event") or ev.get("type")
+            pid = ev.get("problemId") or ev.get("problem_id")
+            if not pid:
+                continue
+            st = per_prob.setdefault(
+                pid,
+                {
+                    "verdict": None,
+                    "wrongAttempts": 0,
+                    "hintsUsed": 0,
+                    "durationSeconds": 0,
+                    "thinkingSeconds": None,
+                    "solvedAtSeconds": 0,
+                    "approach": "",
+                    "localJudge": None,
+                    "attempts": [],
+                },
+            )
+            if ev_type == "approach_noted":
+                st["approach"] = str(ev.get("approach") or "").strip()
+                if st["thinkingSeconds"] is None and ev.get("elapsedSeconds") is not None:
+                    st["thinkingSeconds"] = ev.get("elapsedSeconds")
+            elif ev_type == "hint_used":
+                st["hintsUsed"] = max(st["hintsUsed"], int(ev.get("hintsUsed") or (st["hintsUsed"] + 1)))
+            elif ev_type == "judged":
+                st["localJudge"] = {
+                    "verdict": ev.get("verdict"),
+                    "passed": ev.get("passed"),
+                    "total": ev.get("total"),
+                    "failedCase": ev.get("failedCase"),
+                }
+            elif ev_type == "attempt_logged":
+                wa = int(ev.get("wrongAttempts") or (st["wrongAttempts"] + 1))
+                st["wrongAttempts"] = max(st["wrongAttempts"], wa)
+                st["attempts"].append(
+                    {
+                        "attempt": wa,
+                        "verdict": ev.get("verdict"),
+                        "elapsedSeconds": int(ev.get("elapsedSeconds") or ev.get("elapsed_seconds") or 0),
+                    }
+                )
+            elif ev_type == "problem_verdict":
+                v = str(ev.get("verdict") or "").upper()
+                st["verdict"] = v or st["verdict"]
+                dur = int(ev.get("durationSeconds") or ev.get("duration_seconds") or 0)
+                st["durationSeconds"] = max(st["durationSeconds"], dur)
+                if ev.get("thinkingSeconds") is not None:
+                    st["thinkingSeconds"] = ev.get("thinkingSeconds")
+                st["wrongAttempts"] = max(st["wrongAttempts"], int(ev.get("wrongAttempts") or 0))
+                st["hintsUsed"] = max(st["hintsUsed"], int(ev.get("hintsUsed") or 0))
+                if v == "AC":
+                    st["solvedAtSeconds"] = int(ev.get("solvedAtSeconds") or dur)
+    return per_prob
+
+
+def abandon_active(active_dir: str = ACTIVE_DIR) -> Dict[str, Any]:
+    """Settle an active Arena session prematurely: preserve settled verdicts, mark remainder ABANDON."""
+    manifest_path = os.path.join(active_dir, "manifest.json")
+    result_path = os.path.join(active_dir, "result.json")
+    events_path = os.path.join(active_dir, "events.jsonl")
+
+    if not os.path.exists(manifest_path):
+        raise FileNotFoundError(f"Active manifest not found at {manifest_path}")
+    if os.path.exists(result_path):
+        return close_session(active_dir)
+
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+
+    elapsed = 0
+    created_raw = manifest.get("createdAt")
+    if isinstance(created_raw, str) and created_raw.strip():
+        try:
+            created_dt = datetime.datetime.fromisoformat(created_raw.strip().replace("Z", "+00:00"))
+            elapsed = max(0, int((datetime.datetime.now(datetime.timezone.utc) - created_dt).total_seconds()))
+        except Exception:
+            elapsed = 0
+
+    live = _parse_events_jsonl(events_path)
+    result_problems: List[Dict[str, Any]] = []
+    for mp in manifest.get("problems", []):
+        pid = mp["id"]
+        st = live.get(pid, {})
+        verdict = st.get("verdict") or "ABANDON"
+        result_problems.append(
+            {
+                "id": pid,
+                "verdict": verdict,
+                "durationSeconds": int(st.get("durationSeconds") or 0),
+                "thinkingSeconds": st.get("thinkingSeconds"),
+                "solvedAtSeconds": int(st.get("solvedAtSeconds") or 0),
+                "wrongAttempts": int(st.get("wrongAttempts") or 0),
+                "hintsUsed": int(st.get("hintsUsed") or 0),
+                "approach": st.get("approach") or "",
+                "localJudge": st.get("localJudge"),
+                "attempts": st.get("attempts") or [],
+            }
+        )
+
+    synthetic_result = {
+        "sessionId": manifest.get("sessionId"),
+        "status": "abandoned",
+        "pooledElapsedSeconds": elapsed,
+        "durationSeconds": elapsed,
+        "problems": result_problems,
+    }
+    with open(result_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(synthetic_result, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    return close_session(active_dir)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(prog="arena.py", description="Competitive Programming Arena Backend Engine")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("standing", help="Output student standing, domain stats, and solved problem IDs as JSON")
+    p_st = sub.add_parser("standing", help="Output student standing, domain stats, and solved problem IDs as JSON")
+    p_st.add_argument("--course-slug", default=None, help="Optional course slug filter ('none' for ThemeCP/unaffiliated)")
+
+    p_in = sub.add_parser("inspect", help="Inspect compact ledger entries filtered by problem IDs, session, or course")
+    p_in.add_argument("--problem-ids", default=None, help="Comma-separated problem IDs")
+    p_in.add_argument("--session-id", default=None)
+    p_in.add_argument("--course-slug", default=None)
+    p_in.add_argument("--limit", type=int, default=20)
+
+    p_ab = sub.add_parser("abandon_active", help="Abandon active Arena session, keeping settled verdicts and settling remainder")
+    p_ab.add_argument("--active-dir", default=ACTIVE_DIR)
 
     p_b = sub.add_parser("budget", help="Compute default time budget in seconds for a problem difficulty")
     p_b.add_argument("--difficulty", type=int, required=True)
@@ -732,11 +1155,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_rv.add_argument("--verdict", required=True)
     p_rv.add_argument("--session-id", default=None)
 
+    p_an = sub.add_parser("annotate", help="Attach a one-line practice note to a problem in the ledger")
+    p_an.add_argument("--problem-id", required=True)
+    p_an.add_argument("--note", required=True)
+
+    sub.add_parser("attempted", help="List every attempted problem (ids, judge URL, latest verdict) as JSON")
+
     args = ap.parse_args(argv)
 
     try:
         if args.cmd == "standing":
-            print(json.dumps(get_standing(), indent=2, ensure_ascii=False))
+            print(json.dumps(get_standing(args.course_slug), indent=2, ensure_ascii=False))
+        elif args.cmd == "inspect":
+            pids = [p.strip() for p in args.problem_ids.split(",") if p.strip()] if args.problem_ids else None
+            res = inspect_history(pids, args.session_id, args.course_slug, args.limit)
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+        elif args.cmd == "abandon_active":
+            res = abandon_active(args.active_dir)
+            print(json.dumps(res, indent=2, ensure_ascii=False))
         elif args.cmd == "budget":
             r = args.rating if args.rating is not None else int(load_rating()["global"].get("rating", 1200))
             b = compute_time_budget_seconds(args.difficulty, r)
@@ -747,6 +1183,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         elif args.cmd == "record_verdict":
             res = record_verdict(args.problem_id, args.verdict, args.session_id)
             print(json.dumps(res, indent=2, ensure_ascii=False))
+        elif args.cmd == "annotate":
+            res = annotate(args.problem_id, args.note)
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+        elif args.cmd == "attempted":
+            print(json.dumps(attempted(), indent=2, ensure_ascii=False))
     except Exception as exc:
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 1

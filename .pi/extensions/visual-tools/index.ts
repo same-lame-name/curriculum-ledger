@@ -27,6 +27,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import * as fs from "node:fs"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
+import { sweepStagingRootAtStartup } from "./tools/_common.ts"
 import registerMermaidTools from "./tools/mermaid_tools.js"
 import registerSvgTools from "./tools/svg_tools.js"
 
@@ -69,8 +70,9 @@ export default function (pi: ExtensionAPI) {
     registerSvgTools(pi)
   }
 
-  // 2. Legacy subagent path registration (interactive-subagents)
-  pi.on("session_start", async () => {
+  // 2. Legacy subagent path registration (interactive-subagents) + startup temp sweep
+  pi.on("session_start", async (_event, ctx) => {
+    if (ctx.hasUI) sweepStagingRootAtStartup()
     registerToolExtensions()
   })
 }

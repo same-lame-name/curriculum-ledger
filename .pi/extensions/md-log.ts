@@ -40,14 +40,105 @@ const QA_TOOLS = new Set(["quiz", "ask_user_question"]);
 //    `\rightarrow`). Restore those exact stems before general unescaping.
 // 2. One extra level of JSON escaping (`\\cdot`, `\"`). Undo one level (`\\` → `\`,
 //    `\"` → `"`). Assistant/user prose does not pass through this layer.
+// 3. A doubly escaped Unicode character arriving as literal `±`. Decode it
+//    to the character it names (runs first, before `\\` collapses).
 function unescapeToolText(s: string): string {
 	return s
+		.replace(/\\u([0-9a-fA-F]{4})/g, (_m, hex: string) => String.fromCharCode(parseInt(hex, 16)))
 		.replace(/\x08(?=(?:inom|eta|mathbb|mathcal|ar|ig|ots|ullet)\b)/g, "\\b")
 		.replace(/\x0c(?=(?:rac|orall)\b)/g, "\\f")
 		.replace(/\t(?=(?:ext|imes|o|heta|au|ilde|op|riangle)\b)/g, "\\t")
 		.replace(/\r(?=(?:ight|ightarrow|ho|ceil|floor)\b)/g, "\\r")
 		.replace(/\\\\/g, "\\")
 		.replace(/\\"/g, '"');
+}
+
+function localDateStr(): string {
+	const d = new Date();
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function findVaultRoot(startDir: string): string {
+	let cur = path.resolve(startDir);
+	while (true) {
+		if (fs.existsSync(path.join(cur, ".pi")) || fs.existsSync(path.join(cur, "courses"))) {
+			return cur;
+		}
+		const parent = path.dirname(cur);
+		if (parent === cur) break;
+		cur = parent;
+	}
+	return startDir;
+}
+
+function recordCourseSessionLog(courseDir: string, dateStr: string): void {
+	const courseFile = path.join(courseDir, "course.md");
+	if (!fs.existsSync(courseFile)) return;
+	const relLink = `sessions/${dateStr}.md`;
+	const entry = `- ${dateStr} → ${relLink}`;
+	const src = fs.readFileSync(courseFile, "utf-8").replace(/\r\n/g, "\n");
+	if (src.includes(relLink)) return;
+
+	const lines = src.split("\n");
+	const secIdx = lines.findIndex((l) => /^##\s+Session log\s*$/.test(l));
+	if (secIdx >= 0) {
+		let endIdx = lines.length;
+		for (let i = secIdx + 1; i < lines.length; i++) {
+			if (/^##\s+/.test(lines[i])) {
+				endIdx = i;
+				break;
+			}
+		}
+		let insertAt = secIdx + 1;
+		for (let k = endIdx - 1; k > secIdx; k--) {
+			if (lines[k].trim() !== "") {
+				insertAt = k + 1;
+				break;
+			}
+		}
+		lines.splice(insertAt, 0, entry);
+		fs.writeFileSync(courseFile, lines.join("\n").replace(/\n*$/, "\n"), "utf-8");
+	} else {
+		const trimmed = src.replace(/\s+$/, "");
+		fs.writeFileSync(courseFile, `${trimmed}\n\n## Session log\n${entry}\n`, "utf-8");
+	}
+}
+
+/**
+ * Roll over stale dated session paths on session_start across midnight so resumed
+ * conversations under courses/<slug>/sessions/ or practice/themecp/sessions/ append
+ * into today's session file rather than yesterday's.
+ */
+function rolloverDatedSessionFile(staleFile: string, fallbackCwd: string): string | null {
+	const norm = path.resolve(staleFile).replace(/\\/g, "/");
+	const m = /(.*)\/(courses\/[^/]+|practice\/themecp)\/sessions\/(\d{4}-\d{2}-\d{2})\.md$/i.exec(norm);
+	if (!m) return null;
+
+	const today = localDateStr();
+	const oldDate = m[3];
+	if (oldDate === today) return null;
+
+	const scopeRel = m[2].toLowerCase();
+	const sessionsDir = path.dirname(path.resolve(staleFile));
+	const parentDir = path.dirname(sessionsDir);
+	const targetFile = path.join(sessionsDir, `${today}.md`);
+	const vaultRoot = findVaultRoot(m[1] || fallbackCwd);
+
+	try {
+		fs.mkdirSync(sessionsDir, { recursive: true });
+		if (!fs.existsSync(targetFile)) {
+			const initial = scopeRel === "practice/themecp" ? `# ThemeCP Session — ${today}\n\n` : "";
+			fs.writeFileSync(targetFile, initial, "utf-8");
+		}
+		if (scopeRel.startsWith("courses/")) {
+			recordCourseSessionLog(parentDir, today);
+		}
+		const relSession = path.relative(vaultRoot, targetFile).replace(/\\/g, "/");
+		fs.writeFileSync(path.join(vaultRoot, ".active-session"), relSession + "\n", "utf-8");
+		return targetFile;
+	} catch {
+		return null;
+	}
 }
 
 export default function mdLog(pi: ExtensionAPI) {
@@ -66,11 +157,19 @@ export default function mdLog(pi: ExtensionAPI) {
 		}
 		if (lastLinkData?.file) {
 			logFile = lastLinkData.file;
-			const theme = ctx.ui.theme;
-			ctx.ui.setStatus(
-				"md-log",
-				theme.fg("accent", "🗒 ") + theme.fg("dim", path.basename(logFile)),
-			);
+			const rolled = rolloverDatedSessionFile(logFile, ctx.cwd);
+			if (rolled) {
+				logFile = rolled;
+				pi.appendEntry("md-log", { file: logFile });
+				ctx.ui?.notify?.(`md-log rolled over across midnight to ${path.basename(logFile)}`, "info");
+			}
+			const theme = ctx.ui?.theme;
+			if (theme && typeof ctx.ui?.setStatus === "function") {
+				ctx.ui.setStatus(
+					"md-log",
+					theme.fg("accent", "🗒 ") + theme.fg("dim", path.basename(logFile)),
+				);
+			}
 		}
 	});
 
@@ -314,6 +413,8 @@ export default function mdLog(pi: ExtensionAPI) {
 		logFile = null;
 		pi.appendEntry("md-log", { file: null });
 		ctx.ui.setStatus("md-log", undefined);
+		(globalThis as any).__piTeacher?.deactivate?.();
+		(globalThis as any).__piRbac?.setPrincipal?.("user");
 		return { ok: true, message: `Unlinked: ${name}` };
 	}
 
@@ -423,6 +524,23 @@ export default function mdLog(pi: ExtensionAPI) {
 		const blocks: string[] = [];
 		let count = 0;
 		for (const entry of chain) {
+			// Arena results arrive as a custom message (arena.ts → pi.sendMessage).
+			// Accept either session-entry shape for custom messages.
+			const custom =
+				entry.type === "custom_message"
+					? entry
+					: entry.type === "message" && entry.message?.role === "custom"
+						? entry.message
+						: null;
+			if (custom) {
+				if (custom.customType === "arena-result") {
+					const d = custom.details;
+					if (Array.isArray(d?.endCalloutLines) && d.endCalloutLines.length > 0) {
+						blocks.push(callout("example", unescapeToolText(d.endCalloutTitle || "Arena Session"), d.endCalloutLines));
+					}
+				}
+				continue;
+			}
 			if (entry.type !== "message") continue;
 			const msg = entry.message;
 			if (!msg || !("role" in msg)) continue;

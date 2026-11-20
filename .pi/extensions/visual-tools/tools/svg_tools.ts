@@ -23,6 +23,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import { Type } from "@sinclair/typebox"
 import {
   applyEdit,
+  cleanupSessionDir,
   existsSync,
   join,
   mkdirSync,
@@ -188,5 +189,9 @@ export default function svgToolsExtension(pi: ExtensionAPI) {
       content.push({ type: "image", data, mimeType: "image/png" })
       return { content, details: { ok: true, path: outPath } as RenderDetails }
     },
+  })
+
+  pi.on("agent_end", async (_ev, ctx) => {
+    if (!ctx.hasUI) cleanupSessionDir(GROUP)
   })
 }

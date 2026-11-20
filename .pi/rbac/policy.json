@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "enabled": true,
+  "mode": "enforce",
+  "defaults": {
+    "user": ["read", "write", "create", "delete", "exec"],
+    "teacher": ["read", "write", "create", "delete", "exec"],
+    "subagent": ["read"]
+  },
+  "domainTools": {
+    "catalog": ["user", "subagent:problem-recommender", "subagent:resource-recommender"],
+    "curriculum": ["user", "teacher:teach"],
+    "ladder": ["user", "teacher:themecp"],
+    "course": ["user", "teacher:themecp"],
+    "arena_run": ["user", "teacher"],
+    "arena_ledger": ["user", "teacher"]
+  },
+  "resources": [
+    {
+      "id": "catalog_sets",
+      "path": [".pi/catalog/sets", ".pi/catalog/sets/*.json"],
+      "producer": "subagent:problem-recommender",
+      "consumers": [
+        { "principal": "teacher", "actions": ["read"] }
+      ]
+    },
+    {
+      "id": "lab_tests",
+      "path": [
+        ".pi/lab/tests",
+        ".pi/lab/tests/*",
+        ".pi/lab/tests/*/*.in",
+        ".pi/lab/tests/*/*.out",
+        ".pi/lab/tests/*/checker.cpp",
+        ".pi/lab/tests/*/checker.py",
+        ".pi/lab/tests/*/checker.sh"
+      ],
+      "producer": "subagent:lab",
+      "consumers": [
+        { "principal": "teacher", "actions": ["read"] }
+      ]
+    },
+    {
+      "id": "catalog_static",
+      "path": ".pi/catalog/**",
+      "exclude": [".pi/catalog/sets", ".pi/catalog/sets/*.json"],
+      "producer": "internal",
+      "consumers": [],
+      "denyMessage": "The static catalog belongs to the catalog extension. Query it via the catalog tool (sets under .pi/catalog/sets/ stay writable by problem-recommender and readable by teachers)."
+    },
+    {
+      "id": "arena_state",
+      "path": ".pi/arena/**",
+      "producer": "internal",
+      "consumers": [],
+      "denyMessage": "The Arena keeps its own files (.pi/arena/). Access it through arena_ledger, arena_run, or catalog."
+    },
+    {
+      "id": "ladder_state",
+      "path": ".pi/ladder/**",
+      "producer": "internal",
+      "consumers": [],
+      "denyMessage": "The ladder keeps its own files (.pi/ladder/). Use the ladder tool."
+    },
+    {
+      "id": "curriculum_state",
+      "path": ".pi/curriculum/**",
+      "producer": "internal",
+      "consumers": [
+        {
+          "principal": "subagent:curriculum-architect",
+          "actions": ["exec"],
+          "execPattern": "^(?:env\\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\\S+\\s+)*python3?(?:\\s+-[uBSEsO]+)*\\s+[\"']?(?:[^\\s\"']+/)?curriculum\\.py[\"']?\\s+validate(?:\\s|$)"
+        }
+      ],
+      "denyMessage": "The curriculum engine keeps its own files (.pi/curriculum/). Teacher:teach must query courses via the curriculum tool; curriculum-architect may run curriculum.py validate."
+    },
+    {
+      "id": "pi_system",
+      "path": ".pi/**",
+      "exclude": [
+        ".pi/catalog/**",
+        ".pi/curriculum/**",
+        ".pi/lab/tests",
+        ".pi/lab/tests/*",
+        ".pi/lab/tests/*/*.in",
+        ".pi/lab/tests/*/*.out",
+        ".pi/arena/**",
+        ".pi/ladder/**"
+      ],
+      "producer": "user",
+      "consumers": [
+        { "principal": "teacher", "actions": ["read"] },
+        {
+          "principal": "subagent:*",
+          "actions": ["exec"],
+          "execPattern": "^(?:env\\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\\S+\\s+)*python3?(?:\\s+-[uBSEsO]+)*\\s+[\"']?(?:[^\\s\"']+/)?browser_fetch\\.py[\"']?(?:\\s|$)"
+        }
+      ],
+      "denyMessage": "System extensions, skills, agent specs, and RBAC configs under .pi/ are read-only during lessons and subagent runs."
+    },
+    {
+      "id": "course_guide",
+      "path": "courses/*/curriculum.md",
+      "producer": "subagent:curriculum-architect",
+      "consumers": [
+        { "principal": "subagent:auditor", "actions": ["read"] }
+      ],
+      "denyMessage": "curriculum.md belongs to curriculum-architect (teacher:teach queries it via the curriculum tool; readable raw only by auditor)."
+    },
+    {
+      "id": "course_notebook",
+      "path": "courses/*/course.md",
+      "producer": "teacher:teach",
+      "consumers": [
+        { "principal": "subagent:curriculum-architect", "actions": ["read"] },
+        { "principal": "subagent:auditor", "actions": ["read"] }
+      ],
+      "structuredWriteOnly": true,
+      "denyMessage": "course.md belongs to teacher:teach — update it using write or edit so section budgets are enforced."
+    },
+    {
+      "id": "course_sources",
+      "path": "courses/*/sources/**",
+      "producer": "user",
+      "consumers": [
+        { "principal": "teacher:teach", "actions": ["read"] },
+        { "principal": "subagent:curriculum-architect", "actions": ["read"] },
+        { "principal": "subagent:auditor", "actions": ["read"] },
+        { "principal": "subagent:lab", "actions": ["read"] },
+        { "principal": "subagent:problem-grader", "actions": ["read"] }
+      ],
+      "denyMessage": "courses/*/sources/ holds the student's reference material (read-only during lessons and helper runs)."
+    },
+    {
+      "id": "course_sessions",
+      "path": ["courses/*/sessions", "courses/*/sessions/*.md"],
+      "producer": "internal",
+      "consumers": [
+        { "principal": "teacher:teach", "actions": ["read"] },
+        { "principal": "subagent:curriculum-architect", "actions": ["read"] },
+        { "principal": "subagent:auditor", "actions": ["read"] }
+      ],
+      "denyMessage": "Session transcripts are owned by md-log — never edit them directly."
+    },
+    {
+      "id": "themecp_docs",
+      "path": [
+        "practice/themecp/ladder.md",
+        "practice/themecp/rounds",
+        "practice/themecp/rounds/*.md",
+        "practice/themecp/diagnoses",
+        "practice/themecp/diagnoses/*.md"
+      ],
+      "producer": "teacher:themecp",
+      "consumers": [
+        { "principal": "subagent:problem-grader", "actions": ["read"] }
+      ],
+      "denyMessage": "practice/themecp/ docs belong to teacher:themecp."
+    },
+    {
+      "id": "themecp_sessions",
+      "path": ["practice/themecp/sessions", "practice/themecp/sessions/*.md"],
+      "producer": "internal",
+      "consumers": [
+        { "principal": "teacher:themecp", "actions": ["read"] }
+      ],
+      "denyMessage": "ThemeCP session transcripts are owned by md-log — never edit them directly."
+    },
+    {
+      "id": "learner_notes",
+      "path": "learner.md",
+      "producer": "user",
+      "consumers": [
+        { "principal": "teacher", "actions": ["read"] },
+        { "principal": "subagent:curriculum-architect", "actions": ["read"] },
+        { "principal": "subagent:auditor", "actions": ["read"] }
+      ],
+      "denyMessage": "learner.md is the student's personal notes. AI agents cannot modify it."
+    }
+  ]
+}

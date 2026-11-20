@@ -106,18 +106,18 @@ function M.setup_highlights()
 		ArenaTabActive = "Function",
 		ArenaTabInactive = "Comment",
 		ArenaTimerOk = "Number",
-		ArenaTimerWarn = "WarningMsg",
-		ArenaOvertime = "ErrorMsg",
-		ArenaVerdictAC = "String",
-		ArenaVerdictWA = "ErrorMsg",
+		ArenaTimerWarn = "DiagnosticWarn",
+		ArenaOvertime = "DiagnosticError",
+		ArenaVerdictAC = "DiagnosticOk",
+		ArenaVerdictWA = "DiagnosticError",
 		ArenaVerdictSubmit = "Special",
 		ArenaBlind = "Special",
-		ArenaHint = "String",
+		ArenaHint = "DiagnosticOk",
 		ArenaMuted = "NonText",
 		ArenaGraphLine = "Special",
 	}
 	for name, link in pairs(links) do
-		vim.api.nvim_set_hl(0, name, { link = link, default = true })
+		vim.api.nvim_set_hl(0, name, { link = link })
 	end
 end
 
